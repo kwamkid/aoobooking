@@ -27,12 +27,12 @@ type Booking = {
 };
 
 export default async function BookingsPage({
-  searchParams,
+  params,
 }: {
-  searchParams: Promise<{ h?: string }>;
+  params: Promise<{ hotel: string }>;
 }) {
-  const { h } = await searchParams;
-  const { hotel } = await requireHotelMember(h);
+  const { hotel: hotelSlug } = await params;
+  const { hotel } = await requireHotelMember(hotelSlug);
   const canCreate = await can(hotel.id, "bookings.create");
   const supabase = await createClient();
 

@@ -43,12 +43,15 @@ function baht(satang: number) {
 }
 
 export default async function ReportsPage({
+  params,
   searchParams,
 }: {
-  searchParams: Promise<{ h?: string; from?: string; to?: string; p?: string }>;
+  params: Promise<{ hotel: string }>;
+  searchParams: Promise<{ from?: string; to?: string; p?: string }>;
 }) {
-  const { h, from, to, p } = await searchParams;
-  const { hotel } = await requireHotelMember(h);
+  const { hotel: hotelSlug } = await params;
+  const { from, to, p } = await searchParams;
+  const { hotel } = await requireHotelMember(hotelSlug);
   const canView = await can(hotel.id, "reports.view");
 
   if (!canView) {
@@ -147,7 +150,6 @@ export default async function ReportsPage({
       <PageHeader title="รายงาน" subtitle={hotel.name} />
 
       <form className="mb-6 flex flex-wrap items-end gap-3">
-        <input type="hidden" name="h" value={hotel.slug} />
         <Field label="ตั้งแต่">
           <Input type="date" name="from" defaultValue={defFrom} />
         </Field>

@@ -17,12 +17,15 @@ type AuditRow = {
 };
 
 export default async function AuditPage({
+  params,
   searchParams,
 }: {
-  searchParams: Promise<{ h?: string; action?: string }>;
+  params: Promise<{ hotel: string }>;
+  searchParams: Promise<{ action?: string }>;
 }) {
-  const { h, action } = await searchParams;
-  const { hotel } = await requireHotelMember(h);
+  const { hotel: hotelSlug } = await params;
+  const { action } = await searchParams;
+  const { hotel } = await requireHotelMember(hotelSlug);
   // audit ดูได้เฉพาะ owner/admin — RLS จำกัดไว้แล้ว แต่เช็คที่ app เพื่อ UX (ชั้นที่ 3)
   const canManage = await can(hotel.id, "settings.team");
 
@@ -54,7 +57,6 @@ export default async function AuditPage({
       <PageHeader title="บันทึกกิจกรรม" subtitle={`${hotel.name} · 100 รายการล่าสุด`} />
 
       <form className="mb-6">
-        <input type="hidden" name="h" value={hotel.slug} />
         <SearchBox
           name="action"
           defaultValue={action ?? ""}

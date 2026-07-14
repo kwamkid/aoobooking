@@ -21,12 +21,12 @@ type Property = {
 };
 
 export default async function PropertiesPage({
-  searchParams,
+  params,
 }: {
-  searchParams: Promise<{ h?: string }>;
+  params: Promise<{ hotel: string }>;
 }) {
-  const { h } = await searchParams;
-  const { hotel } = await requireHotelMember(h);
+  const { hotel: hotelSlug } = await params;
+  const { hotel } = await requireHotelMember(hotelSlug);
   const canEdit = await can(hotel.id, "settings.properties");
   const access = await resolveAccess(hotel.id);
 

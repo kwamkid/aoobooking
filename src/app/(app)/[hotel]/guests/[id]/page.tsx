@@ -18,14 +18,11 @@ type Stay = {
 
 export default async function GuestDetailPage({
   params,
-  searchParams,
 }: {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ h?: string }>;
+  params: Promise<{ hotel: string; id: string }>;
 }) {
-  const { id } = await params;
-  const { h } = await searchParams;
-  const { hotel } = await requireHotelMember(h);
+  const { hotel: hotelSlug, id } = await params;
+  const { hotel } = await requireHotelMember(hotelSlug);
   const canViewId = await can(hotel.id, "guests.view_id");
   const canEdit = await can(hotel.id, "guests.edit");
   const supabase = await createClient();

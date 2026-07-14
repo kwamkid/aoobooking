@@ -33,12 +33,12 @@ const STATUS_TONE: Record<string, Tone> = {
 };
 
 export default async function BillingPage({
-  searchParams,
+  params,
 }: {
-  searchParams: Promise<{ h?: string }>;
+  params: Promise<{ hotel: string }>;
 }) {
-  const { h } = await searchParams;
-  const { hotel } = await requireHotelMember(h);
+  const { hotel: hotelSlug } = await params;
+  const { hotel } = await requireHotelMember(hotelSlug);
   const supabase = await createClient();
 
   const { data: invoices } = await supabase

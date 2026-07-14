@@ -24,12 +24,15 @@ function cellClass(avail: number, total: number): string {
 }
 
 export default async function CalendarPage({
+  params,
   searchParams,
 }: {
-  searchParams: Promise<{ h?: string; p?: string; m?: string }>;
+  params: Promise<{ hotel: string }>;
+  searchParams: Promise<{ p?: string; m?: string }>;
 }) {
-  const { h, p, m } = await searchParams;
-  const { hotel } = await requireHotelMember(h);
+  const { hotel: hotelSlug } = await params;
+  const { p, m } = await searchParams;
+  const { hotel } = await requireHotelMember(hotelSlug);
   const supabase = await createClient();
 
   const { data: propsData } = await supabase
@@ -115,7 +118,7 @@ export default async function CalendarPage({
           properties.map((pr) => (
             <Link
               key={pr.id}
-              href={`${hotelHref("/calendar", hotel.slug)}&p=${pr.id}&m=${yy}-${String(mm).padStart(2, "0")}`}
+              href={`${hotelHref("/calendar", hotel.slug)}?p=${pr.id}&m=${yy}-${String(mm).padStart(2, "0")}`}
               className={`rounded-full px-3 py-1 text-sm ${
                 pr.id === activeProp.id
                   ? "bg-brand text-brand-fg"
@@ -127,14 +130,14 @@ export default async function CalendarPage({
           ))}
         <div className="ml-auto flex items-center gap-2 text-sm">
           <Link
-            href={`${hotelHref("/calendar", hotel.slug)}&p=${activeProp.id}&m=${prevM}`}
+            href={`${hotelHref("/calendar", hotel.slug)}?p=${activeProp.id}&m=${prevM}`}
             className="rounded border border-border px-2 py-1 text-fg-muted"
           >
             ←
           </Link>
           <span className="min-w-32 text-center font-medium text-fg">{monthLabel}</span>
           <Link
-            href={`${hotelHref("/calendar", hotel.slug)}&p=${activeProp.id}&m=${nextM}`}
+            href={`${hotelHref("/calendar", hotel.slug)}?p=${activeProp.id}&m=${nextM}`}
             className="rounded border border-border px-2 py-1 text-fg-muted"
           >
             →

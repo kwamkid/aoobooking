@@ -20,12 +20,12 @@ const SUB_STATUS_TONE: Record<string, Tone> = {
 };
 
 export default async function PackageSettingsPage({
-  searchParams,
+  params,
 }: {
-  searchParams: Promise<{ h?: string }>;
+  params: Promise<{ hotel: string }>;
 }) {
-  const { h } = await searchParams;
-  const { hotel, role } = await requireHotelMember(h);
+  const { hotel: hotelSlug } = await params;
+  const { hotel, role } = await requireHotelMember(hotelSlug);
   const owner = isOwner(role);
 
   const [packages, sub] = await Promise.all([

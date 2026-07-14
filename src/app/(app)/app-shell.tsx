@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
   LayoutDashboard,
@@ -19,33 +19,22 @@ import {
   X,
   ChevronDown,
   ChevronRight,
+  ChevronsUpDown,
+  Check,
   PanelLeftClose,
   PanelLeftOpen,
   LogOut,
+  Plus,
   type LucideIcon,
 } from "lucide-react";
 import { hotelHref } from "@/lib/hotel/href";
 import { ThemeToggle, Popover } from "@/components/ui";
 
-// ============================================================================
-// AppShell — sidebar แบบ codelab-school-supa (เจ้าของขอ 2026-07-14)
-// - ย่อเป็น icon rail ได้ (จำใน localStorage) + tooltip (title) ตอนย่อ
-// - ไอคอนมีสีประจำเมนู · active = พื้น brand + เงานุ่ม (--shadow-brand)
-// - กลุ่มเมนูพับได้ + auto-expand ตาม path · section label คั่นหมวด
-// - top bar: hamburger (mobile) / ปุ่มย่อ (desktop) / ThemeToggle / avatar dropdown
-// ============================================================================
+type HotelRef = { slug: string; name: string };
 
-type NavLeaf = {
-  key: string; // i18n key ใน nav.* หรือ label ตรง
-  label?: string; // ถ้าไม่ใช้ i18n
-  href: string;
-  Icon?: LucideIcon;
-  iconClass?: string; // สีประจำเมนู (token)
-};
-type NavNode =
-  | (NavLeaf & { subItems?: never; section?: never })
-  | { key: string; label?: string; Icon?: LucideIcon; iconClass?: string; subItems: NavLeaf[]; href?: never; section?: never }
-  | { section: string; key: string; href?: never; subItems?: never };
+// เมนูหลัก (ไม่รวม settings — settings fix ล่างสุดแยก)
+type NavLeaf = { key: string; label?: string; href: string; Icon: LucideIcon; iconClass?: string };
+type NavNode = NavLeaf | { section: string; key: string };
 
 const NAV: NavNode[] = [
   { key: "dashboard", href: "/dashboard", Icon: LayoutDashboard, iconClass: "text-orange" },
@@ -59,33 +48,34 @@ const NAV: NavNode[] = [
   { key: "rooms", href: "/rooms", Icon: BedDouble, iconClass: "text-orange" },
   { key: "rates", href: "/rates", Icon: Tag, iconClass: "text-green" },
   { key: "reports", href: "/reports", Icon: BarChart3, iconClass: "text-info" },
-  {
-    key: "settings",
-    Icon: Settings,
-    iconClass: "text-fg-muted",
-    subItems: [
-      { key: "st-hotel", label: "โรงแรม & สาขา", href: "/settings/properties" },
-      { key: "st-package", label: "แพ็กเกจ", href: "/settings/package" },
-      { key: "st-billing", label: "ประวัติชำระเงิน", href: "/settings/billing" },
-      { key: "st-audit", label: "บันทึกกิจกรรม", href: "/settings/audit" },
-    ],
-  },
 ];
+
+const SETTINGS_SUB: NavLeaf[] = [
+  { key: "st-hotel", label: "โรงแรม & สาขา", href: "/settings/properties", Icon: Settings },
+  { key: "st-package", label: "แพ็กเกจ", href: "/settings/package", Icon: Settings },
+  { key: "st-billing", label: "ประวัติชำระเงิน", href: "/settings/billing", Icon: Settings },
+  { key: "st-audit", label: "บันทึกกิจกรรม", href: "/settings/audit", Icon: Settings },
+];
+
+function initialOf(name: string) {
+  return name.trim().charAt(0).toUpperCase() || "?";
+}
 
 export function AppShell({
   user,
+  activeHotel,
+  hotels,
   children,
 }: {
   user: { name: string; email: string };
+  activeHotel: HotelRef;
+  hotels: HotelRef[];
   children: React.ReactNode;
 }) {
   const t = useTranslations("nav");
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const slug = searchParams.get("h") ?? "";
 
   const [mobileOpen, setMobileOpen] = useState(false);
-  // desktop: ย่อเป็น icon rail (จำค่า)
   const [collapsed, setCollapsed] = useState(false);
   useEffect(() => {
     setCollapsed(localStorage.getItem("aoo-sidebar-collapsed") === "true");
@@ -97,74 +87,57 @@ export function AppShell({
     });
   }
 
-  const [expanded, setExpanded] = useState<string[]>([]);
-  // auto-expand กลุ่มที่ path ปัจจุบันอยู่ข้างใน
-  useEffect(() => {
-    const open = NAV.filter(
-      (n) => "subItems" in n && n.subItems?.some((s) => pathname.startsWith(s.href)),
-    ).map((n) => n.key);
-    setExpanded((prev) => [...new Set([...prev, ...open])]);
-  }, [pathname]);
+  const slug = activeHotel.slug;
+  const withHotel = (href: string) => hotelHref(href, slug);
 
-  // active แบบ most-specific (กัน /settings/properties ไป active ทับ /settings/audit)
-  const allHrefs = useMemo(() => {
-    const hs: string[] = [];
-    for (const n of NAV) {
-      if ("href" in n && n.href) hs.push(n.href);
-      if ("subItems" in n && n.subItems) n.subItems.forEach((s) => hs.push(s.href));
-    }
-    return hs;
-  }, []);
+  // active: เทียบ path หลัง /[hotel] · most-specific
+  const base = `/${slug}`;
+  const subPath = pathname.startsWith(base) ? pathname.slice(base.length) || "/" : pathname;
+  const allHrefs = useMemo(
+    () => [
+      ...NAV.filter((n): n is NavLeaf => "href" in n).map((n) => n.href),
+      ...SETTINGS_SUB.map((s) => s.href),
+    ],
+    [],
+  );
   function isActive(href: string) {
-    if (pathname === href) return true;
-    if (!pathname.startsWith(href + "/") && !(pathname.startsWith(href) && href !== "/"))
-      return false;
-    if (!pathname.startsWith(href)) return false;
-    return !allHrefs.some(
-      (h) => h !== href && h.startsWith(href) && pathname.startsWith(h),
-    );
+    if (subPath === href) return true;
+    if (href === "/dashboard" && subPath === "/") return true;
+    if (!subPath.startsWith(href)) return false;
+    return !allHrefs.some((h) => h !== href && h.startsWith(href) && subPath.startsWith(h));
   }
+
+  const [settingsOpen, setSettingsOpen] = useState(
+    () => SETTINGS_SUB.some((s) => subPath.startsWith(s.href)),
+  );
 
   const label = (n: { key: string; label?: string }) =>
     n.label ?? t(n.key as Parameters<typeof t>[0]);
 
-  const withHotel = (href: string) => (slug ? hotelHref(href, slug) : href);
-
-  // ── user dropdown (ใช้ Popover ที่เพิ่ง port) ──
+  // account switcher popover
+  const switchRef = useRef<HTMLButtonElement>(null);
+  const [switchOpen, setSwitchOpen] = useState(false);
+  // user dropdown popover
   const avatarRef = useRef<HTMLButtonElement>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const initial = (user.name || user.email || "?").trim().charAt(0).toUpperCase();
 
   const sidebarBody = (isMobile: boolean) => {
     const rail = !isMobile && collapsed;
     return (
       <div className="flex h-full flex-col">
-        {/* logo */}
+        {/* ── logo (แค่ logo + AooBooking) ── */}
         <div
           className={`flex h-16 items-center border-b border-border px-4 ${
-            rail ? "justify-center px-2" : "justify-between"
+            rail ? "justify-center px-2" : "gap-2"
           }`}
         >
-          {!rail && (
-            <div className="flex items-center gap-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/aoobooking-logo.svg" alt="" className="h-8 w-8 shrink-0" />
-              <div className="min-w-0">
-                <div className="truncate text-base font-bold text-brand">AooBooking</div>
-                {slug && (
-                  <div className="truncate font-mono text-xs text-fg-subtle">{slug}</div>
-                )}
-              </div>
-            </div>
-          )}
-          {rail && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src="/aoobooking-logo.svg" alt="AooBooking" className="h-8 w-8" />
-          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/aoobooking-logo.svg" alt="" className="h-8 w-8 shrink-0" />
+          {!rail && <span className="text-base font-bold text-brand">AooBooking</span>}
           {isMobile && (
             <button
               onClick={() => setMobileOpen(false)}
-              className="btn btn-ghost btn-sm"
+              className="btn btn-ghost btn-sm ml-auto"
               aria-label="ปิดเมนู"
             >
               <X size={18} />
@@ -172,10 +145,65 @@ export function AppShell({
           )}
         </div>
 
-        {/* nav */}
+        {/* ── account switcher (บนสุด ก่อนภาพรวม) ── */}
+        {!rail && (
+          <div className="border-b border-border p-3">
+            <button
+              ref={switchRef}
+              onClick={() => setSwitchOpen((v) => !v)}
+              className="flex w-full items-center gap-2.5 rounded-(--radius) border border-border bg-bg p-2 text-left transition hover:bg-bg-subtle"
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-brand-soft text-sm font-bold text-brand">
+                {initialOf(activeHotel.name)}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-medium text-fg">
+                  {activeHotel.name}
+                </span>
+                <span className="block truncate text-xs text-fg-subtle">/{slug}</span>
+              </span>
+              <ChevronsUpDown size={15} className="shrink-0 text-fg-subtle" />
+            </button>
+            <Popover
+              open={switchOpen}
+              onClose={() => setSwitchOpen(false)}
+              anchor={switchRef.current}
+              align="start"
+              ariaLabel="สลับโรงแรม"
+            >
+              <div className="max-h-72 overflow-y-auto p-1">
+                {hotels.map((h) => (
+                  <Link
+                    key={h.slug}
+                    href={hotelHref("/dashboard", h.slug)}
+                    onClick={() => setSwitchOpen(false)}
+                    className="flex items-center gap-2.5 rounded-sm px-2 py-2 hover:bg-bg-subtle"
+                  >
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-brand-soft text-xs font-bold text-brand">
+                      {initialOf(h.name)}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-sm text-fg">{h.name}</span>
+                    {h.slug === slug && <Check size={15} className="shrink-0 text-brand" />}
+                  </Link>
+                ))}
+              </div>
+              <div className="border-t border-border p-1">
+                <Link
+                  href="/onboarding"
+                  onClick={() => setSwitchOpen(false)}
+                  className="flex items-center gap-2 rounded-sm px-2 py-2 text-sm text-fg-muted hover:bg-bg-subtle hover:text-fg"
+                >
+                  <Plus size={15} /> สร้าง / จัดการโรงแรม
+                </Link>
+              </div>
+            </Popover>
+          </div>
+        )}
+
+        {/* ── nav ── */}
         <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
           {NAV.map((n) => {
-            if ("section" in n && n.section) {
+            if ("section" in n) {
               return (
                 <div key={n.key} className="mt-4 border-t border-border pt-3 first:mt-0">
                   {!rail && (
@@ -186,77 +214,12 @@ export function AppShell({
                 </div>
               );
             }
-
-            if ("subItems" in n && n.subItems) {
-              const groupActive = n.subItems.some((s) => isActive(s.href));
-              const open = expanded.includes(n.key);
-              return (
-                <div key={n.key}>
-                  <button
-                    title={rail ? label(n) : undefined}
-                    onClick={() => {
-                      if (rail) toggleCollapsed(); // ขยายก่อนถึงกดกลุ่มได้
-                      setExpanded((prev) =>
-                        prev.includes(n.key)
-                          ? prev.filter((k) => k !== n.key)
-                          : [...prev, n.key],
-                      );
-                    }}
-                    className={`flex w-full items-center rounded-(--radius) px-3 py-2.5 text-base font-medium transition-colors ${
-                      rail ? "justify-center" : "justify-between"
-                    } ${
-                      groupActive
-                        ? "bg-brand-soft text-brand"
-                        : "text-fg-muted hover:bg-bg-subtle hover:text-fg"
-                    }`}
-                  >
-                    <span className="flex items-center">
-                      {n.Icon && (
-                        <n.Icon
-                          size={19}
-                          className={`${rail ? "" : "mr-3"} ${
-                            groupActive ? "text-brand" : n.iconClass ?? ""
-                          }`}
-                        />
-                      )}
-                      {!rail && label(n)}
-                    </span>
-                    {!rail &&
-                      (open ? (
-                        <ChevronDown size={15} className="opacity-60" />
-                      ) : (
-                        <ChevronRight size={15} className="opacity-60" />
-                      ))}
-                  </button>
-                  {open && !rail && (
-                    <div className="mt-1 ml-8 space-y-0.5">
-                      {n.subItems.map((s) => (
-                        <Link
-                          key={s.key}
-                          href={withHotel(s.href)}
-                          onClick={() => setMobileOpen(false)}
-                          className={`block rounded-(--radius) px-3 py-2 text-base font-medium transition-colors ${
-                            isActive(s.href)
-                              ? "bg-brand text-brand-fg shadow-(--shadow-brand)"
-                              : "text-fg-muted hover:bg-bg-subtle hover:text-fg"
-                          }`}
-                        >
-                          {label(s)}
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            }
-
-            const leaf = n as NavLeaf;
-            const active = isActive(leaf.href);
+            const active = isActive(n.href);
             return (
               <Link
-                key={leaf.key}
-                href={withHotel(leaf.href)}
-                title={rail ? label(leaf) : undefined}
+                key={n.key}
+                href={withHotel(n.href)}
+                title={rail ? label(n) : undefined}
                 onClick={() => setMobileOpen(false)}
                 className={`flex items-center rounded-(--radius) px-3 py-2.5 text-base font-medium transition-colors ${
                   rail ? "justify-center" : ""
@@ -266,35 +229,78 @@ export function AppShell({
                     : "text-fg-muted hover:bg-bg-subtle hover:text-fg"
                 }`}
               >
-                {leaf.Icon && (
-                  <leaf.Icon
-                    size={19}
-                    className={`${rail ? "" : "mr-3"} ${
-                      active ? "text-brand-fg" : leaf.iconClass ?? ""
-                    }`}
-                  />
-                )}
-                {!rail && label(leaf)}
+                <n.Icon
+                  size={19}
+                  className={`${rail ? "" : "mr-3"} ${active ? "text-brand-fg" : n.iconClass ?? ""}`}
+                />
+                {!rail && label(n)}
               </Link>
             );
           })}
         </nav>
+
+        {/* ── settings (fix ล่างสุด) ── */}
+        <div className="border-t border-border px-3 py-2">
+          <button
+            title={rail ? "ตั้งค่า" : undefined}
+            onClick={() => {
+              if (rail) toggleCollapsed();
+              setSettingsOpen((v) => !v);
+            }}
+            className={`flex w-full items-center rounded-(--radius) px-3 py-2.5 text-base font-medium transition-colors ${
+              rail ? "justify-center" : "justify-between"
+            } ${
+              SETTINGS_SUB.some((s) => isActive(s.href))
+                ? "bg-brand-soft text-brand"
+                : "text-fg-muted hover:bg-bg-subtle hover:text-fg"
+            }`}
+          >
+            <span className="flex items-center">
+              <Settings size={19} className={rail ? "" : "mr-3"} />
+              {!rail && "ตั้งค่า"}
+            </span>
+            {!rail &&
+              (settingsOpen ? (
+                <ChevronDown size={15} className="opacity-60" />
+              ) : (
+                <ChevronRight size={15} className="opacity-60" />
+              ))}
+          </button>
+          {settingsOpen && !rail && (
+            <div className="mt-1 ml-8 space-y-0.5 pb-1">
+              {SETTINGS_SUB.map((s) => (
+                <Link
+                  key={s.key}
+                  href={withHotel(s.href)}
+                  onClick={() => setMobileOpen(false)}
+                  className={`block rounded-(--radius) px-3 py-2 text-sm font-medium transition-colors ${
+                    isActive(s.href)
+                      ? "bg-brand text-brand-fg shadow-(--shadow-brand)"
+                      : "text-fg-muted hover:bg-bg-subtle hover:text-fg"
+                  }`}
+                >
+                  {s.label}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     );
   };
 
   return (
     <div className="flex h-dvh overflow-hidden bg-bg">
-      {/* ── desktop sidebar ── */}
+      {/* desktop sidebar */}
       <aside
         className={`hidden shrink-0 border-r border-border bg-bg-elevated transition-all duration-200 lg:block ${
-          collapsed ? "w-[76px]" : "w-64"
+          collapsed ? "w-19" : "w-64"
         }`}
       >
         {sidebarBody(false)}
       </aside>
 
-      {/* ── mobile drawer ── */}
+      {/* mobile drawer */}
       {mobileOpen && (
         <>
           <button
@@ -308,9 +314,8 @@ export function AppShell({
         </>
       )}
 
-      {/* ── main ── */}
+      {/* main */}
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* top bar */}
         <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border bg-bg-elevated px-4">
           <button
             onClick={() => setMobileOpen(true)}
@@ -330,15 +335,13 @@ export function AppShell({
 
           <div className="ml-auto flex items-center gap-2">
             <ThemeToggle />
-
-            {/* user dropdown */}
             <button
               ref={avatarRef}
               onClick={() => setUserMenuOpen((v) => !v)}
               className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-soft font-semibold text-brand"
               aria-label="เมนูผู้ใช้"
             >
-              {initial}
+              {initialOf(user.name || user.email)}
             </button>
             <Popover
               open={userMenuOpen}
@@ -352,7 +355,7 @@ export function AppShell({
                 <div className="text-xs text-fg-muted">{user.email}</div>
               </div>
               <form action="/auth/sign-out" method="post" className="p-1">
-                <button className="flex w-full items-center gap-2 rounded-(--radius-sm) px-3 py-2 text-left text-sm text-fg-muted hover:bg-bg-subtle hover:text-fg">
+                <button className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-left text-sm text-fg-muted hover:bg-bg-subtle hover:text-fg">
                   <LogOut size={15} className="text-danger" />
                   ออกจากระบบ
                 </button>
@@ -361,10 +364,7 @@ export function AppShell({
           </div>
         </header>
 
-        {/* page content */}
-        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          {children}
-        </main>
+        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</main>
       </div>
     </div>
   );

@@ -17,12 +17,15 @@ type RatePlan = {
 };
 
 export default async function RatesPage({
+  params,
   searchParams,
 }: {
-  searchParams: Promise<{ h?: string; p?: string }>;
+  params: Promise<{ hotel: string }>;
+  searchParams: Promise<{ p?: string }>;
 }) {
-  const { h, p } = await searchParams;
-  const { hotel } = await requireHotelMember(h);
+  const { hotel: hotelSlug } = await params;
+  const { p } = await searchParams;
+  const { hotel } = await requireHotelMember(hotelSlug);
   const canEdit = await can(hotel.id, "rates.edit");
   const supabase = await createClient();
 
@@ -85,7 +88,7 @@ export default async function RatesPage({
           {properties.map((pr) => (
             <Link
               key={pr.id}
-              href={`${hotelHref("/rates", hotel.slug)}&p=${pr.id}`}
+              href={`${hotelHref("/rates", hotel.slug)}?p=${pr.id}`}
               className={`rounded-full px-3 py-1 text-sm ${
                 pr.id === activeProp.id
                   ? "bg-brand text-brand-fg"

@@ -36,9 +36,7 @@ export function CreateHotelButton({ hasHotels }: { hasHotels: boolean }) {
           <Field label="ชื่อโรงแรม">
             <Input name="name" placeholder="เช่น บ้านสวนรีสอร์ท" required autoFocus />
           </Field>
-          <Field
-            label="username (สำหรับ URL — เว้นว่างได้ ระบบสร้างจากชื่อ)"
-          >
+          <Field label="URL โรงแรม (เว้นว่างได้ — ระบบสร้างจากชื่อ)">
             <Input
               name="slug"
               placeholder="เช่น baan-suan"
@@ -47,7 +45,8 @@ export function CreateHotelButton({ hasHotels }: { hasHotels: boolean }) {
             />
           </Field>
           <p className="text-xs text-fg-subtle">
-            URL ของโรงแรมจะเป็น aoobooking.com/<span className="font-mono">username</span>
+            หน้าเว็บโรงแรมจะเป็น aoobooking.com/
+            <span className="font-mono text-fg-muted">URL โรงแรม</span>
           </p>
           <Button type="submit" disabled={pending} className="mt-1">
             {pending ? "กำลังสร้าง..." : "สร้างโรงแรม"}

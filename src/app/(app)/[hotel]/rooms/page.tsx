@@ -19,12 +19,15 @@ type RoomType = {
 type Room = { id: string; room_number: string; floor: string | null; room_type_id: string };
 
 export default async function RoomsPage({
+  params,
   searchParams,
 }: {
-  searchParams: Promise<{ h?: string; p?: string }>;
+  params: Promise<{ hotel: string }>;
+  searchParams: Promise<{ p?: string }>;
 }) {
-  const { h, p } = await searchParams;
-  const { hotel } = await requireHotelMember(h);
+  const { hotel: hotelSlug } = await params;
+  const { p } = await searchParams;
+  const { hotel } = await requireHotelMember(hotelSlug);
   const canEdit = await can(hotel.id, "rooms.edit");
   const supabase = await createClient();
 
@@ -88,7 +91,7 @@ export default async function RoomsPage({
           {properties.map((pr) => (
             <Link
               key={pr.id}
-              href={`${hotelHref("/rooms", hotel.slug)}&p=${pr.id}`}
+              href={`${hotelHref("/rooms", hotel.slug)}?p=${pr.id}`}
               className={`rounded-full px-3 py-1 text-sm ${
                 pr.id === activeProp.id
                   ? "bg-brand text-brand-fg"

@@ -19,9 +19,11 @@ function isPublic(pathname: string): boolean {
   return PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
 }
 
-// booking engine หน้าบ้าน = public (/[hotelSlug] และ /[hotelSlug]/[property])
-// จับด้วย prefix แยก: หน้าหลังบ้านอยู่ใต้ (app) group จึงเป็น path ปกติ
-// ที่นี่ปล่อย path ที่ไม่ใช่ระบบหลังบ้าน/superadmin ให้ผ่านได้ (ปรับตอนมี booking engine)
+// URL structure (2026-07-15): tenant อยู่ใน path — /[hotel]/dashboard = หลังบ้าน (auth)
+// หลังบ้าน PMS ทั้งหมดอยู่ใต้ (app)/[hotel]/* → non-public → proxy บังคับ login อัตโนมัติ
+// TODO(Phase 3 booking engine): /[hotel] เปล่าๆ (public) = หน้าบ้านจอง → ต้องเพิ่ม
+//   logic แยก: ถ้า path = /[slug] (ไม่มี segment หลัง) หรือ /[slug]/booking → public
+//   ตอนนั้น check ว่า slug มีจริง + ปล่อย anon read (RLS anon policy)
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

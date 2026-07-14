@@ -6,12 +6,12 @@ import { createClient } from "@/lib/supabase/server";
 import { BookingWizard } from "./wizard";
 
 export default async function NewBookingPage({
-  searchParams,
+  params,
 }: {
-  searchParams: Promise<{ h?: string }>;
+  params: Promise<{ hotel: string }>;
 }) {
-  const { h } = await searchParams;
-  const { hotel } = await requireHotelMember(h);
+  const { hotel: hotelSlug } = await params;
+  const { hotel } = await requireHotelMember(hotelSlug);
   await requirePermission(hotel.id, "bookings.create");
   const supabase = await createClient();
 

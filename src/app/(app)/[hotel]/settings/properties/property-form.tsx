@@ -48,7 +48,7 @@ export function PropertyForm({
 
       {!isEdit && (
         <Field
-          label="slug (URL — เว้นว่างให้ระบบสร้างจากชื่อ)"
+          label="URL สาขา (เว้นว่างได้ — ระบบสร้างจากชื่อ)"
           className="sm:col-span-2"
         >
           <Input name="slug" placeholder="phuket" />

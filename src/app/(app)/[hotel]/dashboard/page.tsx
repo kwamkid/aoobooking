@@ -3,12 +3,12 @@ import { hotelHref } from "@/lib/hotel/href";
 import { PageHeader, Card, ButtonLink, Badge } from "@/components/ui";
 
 export default async function DashboardPage({
-  searchParams,
+  params,
 }: {
-  searchParams: Promise<{ h?: string }>;
+  params: Promise<{ hotel: string }>;
 }) {
-  const { h } = await searchParams;
-  const { hotel, role } = await requireHotelMember(h);
+  const { hotel: hotelSlug } = await params;
+  const { hotel, role } = await requireHotelMember(hotelSlug);
 
   const quickLinks = [
     { href: "/bookings/new", label: "จองใหม่", primary: true },

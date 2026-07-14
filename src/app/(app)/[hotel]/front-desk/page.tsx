@@ -15,12 +15,12 @@ type Row = {
 type Balance = { booking_id: string; balance_satang: number };
 
 export default async function FrontDeskPage({
-  searchParams,
+  params,
 }: {
-  searchParams: Promise<{ h?: string }>;
+  params: Promise<{ hotel: string }>;
 }) {
-  const { h } = await searchParams;
-  const { hotel } = await requireHotelMember(h);
+  const { hotel: hotelSlug } = await params;
+  const { hotel } = await requireHotelMember(hotelSlug);
   const supabase = await createClient();
 
   const today = new Date().toISOString().slice(0, 10);

@@ -24,12 +24,15 @@ type GuestSafe = {
 };
 
 export default async function GuestsPage({
+  params,
   searchParams,
 }: {
-  searchParams: Promise<{ h?: string; q?: string }>;
+  params: Promise<{ hotel: string }>;
+  searchParams: Promise<{ q?: string }>;
 }) {
-  const { h, q } = await searchParams;
-  const { hotel } = await requireHotelMember(h);
+  const { hotel: hotelSlug } = await params;
+  const { q } = await searchParams;
+  const { hotel } = await requireHotelMember(hotelSlug);
   const supabase = await createClient();
 
   // ใช้ guests_safe view (ไม่มี id_number/id_photo_path) สำหรับ list
@@ -52,8 +55,7 @@ export default async function GuestsPage({
     <div className="p-4 sm:p-8">
       <PageHeader title="แขก" subtitle={hotel.name} />
 
-      <form className="mb-6" action={hotelHref("/guests", hotel.slug).split("?")[0]}>
-        <input type="hidden" name="h" value={hotel.slug} />
+      <form className="mb-6">
         <SearchBox
           name="q"
           defaultValue={q ?? ""}
