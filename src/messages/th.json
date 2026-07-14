@@ -1,0 +1,23 @@
+{
+  "app": {
+    "name": "AooBooking",
+    "tagline": "ระบบจองโรงแรม + จัดการหลังบ้าน"
+  },
+  "auth": {
+    "login": "เข้าสู่ระบบ",
+    "loginWithGoogle": "เข้าสู่ระบบด้วย Google",
+    "signOut": "ออกจากระบบ"
+  },
+  "nav": {
+    "dashboard": "ภาพรวม",
+    "calendar": "ปฏิทินห้อง",
+    "bookings": "การจอง",
+    "frontDesk": "หน้าเคาน์เตอร์",
+    "housekeeping": "แม่บ้าน",
+    "rooms": "ห้องพัก",
+    "rates": "ราคา",
+    "guests": "แขก",
+    "reports": "รายงาน",
+    "settings": "ตั้งค่า"
+  }
+}

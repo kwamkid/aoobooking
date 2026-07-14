@@ -1,0 +1,23 @@
+{
+  "app": {
+    "name": "AooBooking",
+    "tagline": "Hotel booking + property management"
+  },
+  "auth": {
+    "login": "Log in",
+    "loginWithGoogle": "Continue with Google",
+    "signOut": "Sign out"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "calendar": "Calendar",
+    "bookings": "Bookings",
+    "frontDesk": "Front Desk",
+    "housekeeping": "Housekeeping",
+    "rooms": "Rooms",
+    "rates": "Rates",
+    "guests": "Guests",
+    "reports": "Reports",
+    "settings": "Settings"
+  }
+}
