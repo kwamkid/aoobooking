@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireHotelMember, isOwner } from "@/lib/auth";
 import { listPublicPackages, getSubscription } from "@/lib/billing";
 import { hotelHref } from "@/lib/hotel/href";
-import { PageHeader, Card, Button, Badge } from "@/components/ui";
+import { Card, Button, Badge } from "@/components/ui";
 import {
   upgradePackage,
   scheduleDowngrade,
@@ -37,21 +37,16 @@ export default async function PackageSettingsPage({
   const scheduledPkg = packages.find((p) => p.id === sub?.scheduled_package_id);
 
   return (
-    <div className="p-4 sm:p-8">
-      <PageHeader
-        title="แพ็กเกจ"
-        subtitle={
-          <>
-            {hotel.name} ·{" "}
-            <Link
-              href={hotelHref("/settings/billing", hotel.slug)}
-              className="text-brand underline"
-            >
-              ประวัติการชำระเงิน
-            </Link>
-          </>
-        }
-      />
+    <>
+      <p className="mb-4 text-sm text-fg-muted">
+        {hotel.name} ·{" "}
+        <Link
+          href={hotelHref("/settings/billing", hotel.slug)}
+          className="text-brand underline"
+        >
+          ประวัติการชำระเงิน
+        </Link>
+      </p>
 
       {sub && (
         <Card className="text-sm">
@@ -151,6 +146,6 @@ export default async function PackageSettingsPage({
         อัพเกรดมีผลทันทีหลังชำระ (เริ่มนับรอบใหม่) · ดาวน์เกรดมีผลตอนจบรอบปัจจุบัน
         ไม่คืนเงินส่วนต่าง · ทุกการเปลี่ยนแปลงถูกบันทึก log
       </p>
-    </div>
+    </>
   );
 }

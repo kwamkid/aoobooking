@@ -1,7 +1,7 @@
 import { requireHotelMember } from "@/lib/auth";
 import { can } from "@/lib/permission";
 import { createClient } from "@/lib/supabase/server";
-import { PageHeader, SearchBox, EmptyState } from "@/components/ui";
+import { SearchBox, EmptyState } from "@/components/ui";
 
 type AuditRow = {
   id: string;
@@ -31,10 +31,10 @@ export default async function AuditPage({
 
   if (!canManage) {
     return (
-      <div className="p-4 sm:p-8">
-        <PageHeader title="บันทึกกิจกรรม" subtitle={hotel.name} />
-        <p className="mt-4 text-fg-muted">เฉพาะเจ้าของ/ผู้ดูแลเท่านั้นที่ดูบันทึกได้</p>
-      </div>
+      <>
+        <p className="mb-4 text-sm text-fg-muted">{hotel.name}</p>
+        <p className="text-fg-muted">เฉพาะเจ้าของ/ผู้ดูแลเท่านั้นที่ดูบันทึกได้</p>
+      </>
     );
   }
 
@@ -53,8 +53,8 @@ export default async function AuditPage({
   const rows = (data ?? []) as unknown as AuditRow[];
 
   return (
-    <div className="p-4 sm:p-8">
-      <PageHeader title="บันทึกกิจกรรม" subtitle={`${hotel.name} · 100 รายการล่าสุด`} />
+    <>
+      <p className="mb-4 text-sm text-fg-muted">{hotel.name} · 100 รายการล่าสุด</p>
 
       <form className="mb-6">
         <SearchBox
@@ -101,6 +101,6 @@ export default async function AuditPage({
           ))}
         </ul>
       )}
-    </div>
+    </>
   );
 }

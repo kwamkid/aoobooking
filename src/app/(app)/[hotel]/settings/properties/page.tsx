@@ -2,7 +2,7 @@ import { requireHotelMember } from "@/lib/auth";
 import { can } from "@/lib/permission";
 import { resolveAccess } from "@/lib/package/resolve-access";
 import { createClient } from "@/lib/supabase/server";
-import { PageHeader, Card, Button, EmptyState, DeleteButton } from "@/components/ui";
+import { Card, Button, EmptyState, DeleteButton } from "@/components/ui";
 import { PropertyForm } from "./property-form";
 import { deleteProperty, toggleMultiProperty } from "./actions";
 
@@ -48,11 +48,8 @@ export default async function PropertiesPage({
   // ── โหมดสาขาเดียว: โชว์ตั้งค่าโรงแรม (สาขาหลัก) ตรงๆ + ปุ่มเปิดหลายสาขา ──
   if (!multi) {
     return (
-      <div className="p-4 sm:p-8">
-        <PageHeader
-          title="ตั้งค่าโรงแรม"
-          subtitle={hotel.name}
-        />
+      <>
+        <p className="mb-4 text-sm text-fg-muted">{hotel.name}</p>
         {main ? (
           <Card>
             {canEdit ? (
@@ -80,7 +77,7 @@ export default async function PropertiesPage({
             </form>
           </Card>
         )}
-      </div>
+      </>
     );
   }
 
@@ -89,13 +86,12 @@ export default async function PropertiesPage({
     access.maxProperties !== null && properties.length >= access.maxProperties;
 
   return (
-    <div className="p-4 sm:p-8">
-      <PageHeader
-        title="สาขา"
-        subtitle={`${hotel.name} · ${properties.length}${
+    <>
+      <p className="mb-4 text-sm text-fg-muted">
+        {`${hotel.name} · ${properties.length}${
           access.maxProperties !== null ? `/${access.maxProperties}` : ""
         } สาขา`}
-      />
+      </p>
 
       <ul className="space-y-3">
         {properties.map((p) => (
@@ -160,6 +156,6 @@ export default async function PropertiesPage({
           )}
         </div>
       )}
-    </div>
+    </>
   );
 }

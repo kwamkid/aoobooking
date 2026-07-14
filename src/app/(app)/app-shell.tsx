@@ -17,8 +17,6 @@ import {
   Settings,
   Menu,
   X,
-  ChevronDown,
-  ChevronRight,
   ChevronsUpDown,
   Check,
   PanelLeftClose,
@@ -106,10 +104,6 @@ export function AppShell({
     if (!subPath.startsWith(href)) return false;
     return !allHrefs.some((h) => h !== href && h.startsWith(href) && subPath.startsWith(h));
   }
-
-  const [settingsOpen, setSettingsOpen] = useState(
-    () => SETTINGS_SUB.some((s) => subPath.startsWith(s.href)),
-  );
 
   const label = (n: { key: string; label?: string }) =>
     n.label ?? t(n.key as Parameters<typeof t>[0]);
@@ -239,51 +233,28 @@ export function AppShell({
           })}
         </nav>
 
-        {/* ── settings (fix ล่างสุด) ── */}
+        {/* ── settings (fix ล่างสุด — link เดียว, sub-menu เป็น tab ในหน้า) ── */}
         <div className="border-t border-border px-3 py-2">
-          <button
+          <Link
+            href={withHotel("/settings/properties")}
             title={rail ? "ตั้งค่า" : undefined}
-            onClick={() => {
-              if (rail) toggleCollapsed();
-              setSettingsOpen((v) => !v);
-            }}
-            className={`flex w-full items-center rounded-(--radius) px-3 py-2.5 text-base font-medium transition-colors ${
-              rail ? "justify-center" : "justify-between"
+            onClick={() => setMobileOpen(false)}
+            className={`flex items-center rounded-(--radius) px-3 py-2.5 text-base font-medium transition-colors ${
+              rail ? "justify-center" : ""
             } ${
               SETTINGS_SUB.some((s) => isActive(s.href))
-                ? "bg-brand-soft text-brand"
+                ? "bg-brand text-brand-fg shadow-(--shadow-brand)"
                 : "text-fg-muted hover:bg-bg-subtle hover:text-fg"
             }`}
           >
-            <span className="flex items-center">
-              <Settings size={19} className={rail ? "" : "mr-3"} />
-              {!rail && "ตั้งค่า"}
-            </span>
-            {!rail &&
-              (settingsOpen ? (
-                <ChevronDown size={15} className="opacity-60" />
-              ) : (
-                <ChevronRight size={15} className="opacity-60" />
-              ))}
-          </button>
-          {settingsOpen && !rail && (
-            <div className="mt-1 ml-8 space-y-0.5 pb-1">
-              {SETTINGS_SUB.map((s) => (
-                <Link
-                  key={s.key}
-                  href={withHotel(s.href)}
-                  onClick={() => setMobileOpen(false)}
-                  className={`block rounded-(--radius) px-3 py-2 text-sm font-medium transition-colors ${
-                    isActive(s.href)
-                      ? "bg-brand text-brand-fg shadow-(--shadow-brand)"
-                      : "text-fg-muted hover:bg-bg-subtle hover:text-fg"
-                  }`}
-                >
-                  {s.label}
-                </Link>
-              ))}
-            </div>
-          )}
+            <Settings
+              size={19}
+              className={`${rail ? "" : "mr-3"} ${
+                SETTINGS_SUB.some((s) => isActive(s.href)) ? "text-brand-fg" : ""
+              }`}
+            />
+            {!rail && "ตั้งค่า"}
+          </Link>
         </div>
       </div>
     );

@@ -3,7 +3,6 @@ import { requireHotelMember } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { hotelHref } from "@/lib/hotel/href";
 import {
-  PageHeader,
   Card,
   Badge,
   EmptyState,
@@ -49,21 +48,16 @@ export default async function BillingPage({
     .limit(50);
 
   return (
-    <div className="p-4 sm:p-8">
-      <PageHeader
-        title="ประวัติการชำระเงิน"
-        subtitle={
-          <>
-            {hotel.name} ·{" "}
-            <Link
-              href={hotelHref("/settings/package", hotel.slug)}
-              className="text-brand underline"
-            >
-              จัดการแพ็กเกจ
-            </Link>
-          </>
-        }
-      />
+    <>
+      <p className="mb-4 text-sm text-fg-muted">
+        {hotel.name} ·{" "}
+        <Link
+          href={hotelHref("/settings/package", hotel.slug)}
+          className="text-brand underline"
+        >
+          จัดการแพ็กเกจ
+        </Link>
+      </p>
 
       {!invoices || invoices.length === 0 ? (
         <EmptyState art="receipt" title="ยังไม่มีรายการ" />
@@ -106,6 +100,6 @@ export default async function BillingPage({
           </Table>
         </Card>
       )}
-    </div>
+    </>
   );
 }
