@@ -988,6 +988,63 @@ export type Database = {
         }
         Relationships: []
       }
+      promo_codes: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          free_months: number
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          note: string | null
+          package_id: string
+          used_count: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          free_months: number
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          note?: string | null
+          package_id: string
+          used_count?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          free_months?: number
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          note?: string | null
+          package_id?: string
+          used_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_codes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_codes_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       properties: {
         Row: {
           address: string | null
@@ -1650,6 +1707,15 @@ export type Database = {
       }
     }
     Functions: {
+      _start_trial: {
+        Args: {
+          p_hotel_id: string
+          p_months: number
+          p_package_id: string
+          p_reason: string
+        }
+        Returns: string
+      }
       accept_invite: { Args: { p_token: string }; Returns: string }
       apply_package_change: {
         Args: { p_hotel_id: string; p_package_id: string; p_reason: string }
@@ -1692,6 +1758,15 @@ export type Database = {
         Returns: undefined
       }
       gen_booking_code: { Args: never; Returns: string }
+      grant_promotion: {
+        Args: {
+          p_hotel_id: string
+          p_months: number
+          p_note?: string
+          p_package_id: string
+        }
+        Returns: Json
+      }
       is_super_admin: { Args: never; Returns: boolean }
       log_audit: {
         Args: {
@@ -1719,6 +1794,11 @@ export type Database = {
         }
         Returns: string
       }
+      redeem_promo_code: {
+        Args: { p_code: string; p_hotel_id: string }
+        Returns: Json
+      }
+      storage_hotel_id: { Args: { p_name: string }; Returns: string }
       user_can: {
         Args: { p_hotel_id: string; p_permission: string }
         Returns: boolean
@@ -1783,7 +1863,12 @@ export type Database = {
       payment_status: "pending" | "confirmed" | "failed" | "voided"
       room_block_reason: "maintenance" | "renovation" | "private"
       saas_payment_method: "card" | "qr_promptpay" | "manual"
-      subscription_status: "active" | "grace" | "expired" | "canceled"
+      subscription_status:
+        | "active"
+        | "grace"
+        | "expired"
+        | "canceled"
+        | "trialing"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1966,7 +2051,13 @@ export const Constants = {
       payment_status: ["pending", "confirmed", "failed", "voided"],
       room_block_reason: ["maintenance", "renovation", "private"],
       saas_payment_method: ["card", "qr_promptpay", "manual"],
-      subscription_status: ["active", "grace", "expired", "canceled"],
+      subscription_status: [
+        "active",
+        "grace",
+        "expired",
+        "canceled",
+        "trialing",
+      ],
     },
   },
 } as const
