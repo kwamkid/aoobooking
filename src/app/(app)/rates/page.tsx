@@ -36,7 +36,7 @@ export default async function RatesPage({
 
   if (properties.length === 0) {
     return (
-      <div className="mx-auto max-w-4xl p-4 sm:p-8">
+      <div className="p-4 sm:p-8">
         <PageHeader title="ราคา" subtitle={hotel.name} />
         <EmptyState
           art="receipt"
@@ -77,7 +77,7 @@ export default async function RatesPage({
   const ratePlans = (rpData ?? []) as unknown as RatePlan[];
 
   return (
-    <div className="mx-auto max-w-4xl p-4 sm:p-8">
+    <div className="p-4 sm:p-8">
       <PageHeader title="ราคา & แพ็กเกจราคา" subtitle={hotel.name} />
 
       {hotel.multi_property && (

@@ -42,7 +42,7 @@ export default async function CalendarPage({
 
   if (properties.length === 0) {
     return (
-      <div className="mx-auto max-w-5xl p-4 sm:p-8">
+      <div className="p-4 sm:p-8">
         <PageHeader title="ปฏิทินห้องว่าง" />
         <EmptyState
           art="calendar"
@@ -106,7 +106,7 @@ export default async function CalendarPage({
   });
 
   return (
-    <div className="mx-auto max-w-6xl p-4 sm:p-8">
+    <div className="p-4 sm:p-8">
       <PageHeader title="ปฏิทินห้องว่าง" />
 
       {/* property switcher (เฉพาะหลายสาขา) + month nav */}

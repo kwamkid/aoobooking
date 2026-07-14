@@ -49,7 +49,7 @@ export default async function BillingPage({
     .limit(50);
 
   return (
-    <div className="mx-auto max-w-3xl p-4 sm:p-8">
+    <div className="p-4 sm:p-8">
       <PageHeader
         title="ประวัติการชำระเงิน"
         subtitle={

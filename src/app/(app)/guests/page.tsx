@@ -49,7 +49,7 @@ export default async function GuestsPage({
   const guests = (data ?? []) as unknown as GuestSafe[];
 
   return (
-    <div className="mx-auto max-w-4xl p-4 sm:p-8">
+    <div className="p-4 sm:p-8">
       <PageHeader title="แขก" subtitle={hotel.name} />
 
       <form className="mb-6" action={hotelHref("/guests", hotel.slug).split("?")[0]}>

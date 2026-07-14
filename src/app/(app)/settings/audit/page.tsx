@@ -28,7 +28,7 @@ export default async function AuditPage({
 
   if (!canManage) {
     return (
-      <div className="mx-auto max-w-4xl p-4 sm:p-8">
+      <div className="p-4 sm:p-8">
         <PageHeader title="บันทึกกิจกรรม" subtitle={hotel.name} />
         <p className="mt-4 text-fg-muted">เฉพาะเจ้าของ/ผู้ดูแลเท่านั้นที่ดูบันทึกได้</p>
       </div>
@@ -50,7 +50,7 @@ export default async function AuditPage({
   const rows = (data ?? []) as unknown as AuditRow[];
 
   return (
-    <div className="mx-auto max-w-4xl p-4 sm:p-8">
+    <div className="p-4 sm:p-8">
       <PageHeader title="บันทึกกิจกรรม" subtitle={`${hotel.name} · 100 รายการล่าสุด`} />
 
       <form className="mb-6">

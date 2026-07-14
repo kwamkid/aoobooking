@@ -18,7 +18,7 @@ export default async function DashboardPage({
   ];
 
   return (
-    <div className="mx-auto max-w-4xl p-4 sm:p-8">
+    <div className="p-4 sm:p-8">
       <PageHeader
         title={hotel.name}
         subtitle={

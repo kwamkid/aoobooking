@@ -53,7 +53,7 @@ export default async function ReportsPage({
 
   if (!canView) {
     return (
-      <div className="mx-auto max-w-4xl p-4 sm:p-8">
+      <div className="p-4 sm:p-8">
         <PageHeader title="รายงาน" subtitle={hotel.name} />
         <p className="mt-4 text-fg-muted">คุณไม่มีสิทธิ์ดูรายงาน</p>
       </div>
@@ -143,7 +143,7 @@ export default async function ReportsPage({
   }
 
   return (
-    <div className="mx-auto max-w-4xl p-4 sm:p-8">
+    <div className="p-4 sm:p-8">
       <PageHeader title="รายงาน" subtitle={hotel.name} />
 
       <form className="mb-6 flex flex-wrap items-end gap-3">

@@ -65,7 +65,7 @@ export default async function FrontDeskPage({
   const inhouseRows = (inhouse ?? []) as unknown as Row[];
 
   return (
-    <div className="mx-auto max-w-4xl p-4 sm:p-8">
+    <div className="p-4 sm:p-8">
       <PageHeader
         title="หน้าเคาน์เตอร์"
         subtitle={`${hotel.name} · ${new Date(today).toLocaleDateString("th-TH")}`}

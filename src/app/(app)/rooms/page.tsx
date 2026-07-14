@@ -38,7 +38,7 @@ export default async function RoomsPage({
 
   if (properties.length === 0) {
     return (
-      <div className="mx-auto max-w-4xl p-4 sm:p-8">
+      <div className="p-4 sm:p-8">
         <PageHeader title="ห้องพัก" subtitle={hotel.name} />
         <EmptyState
           art="bed"
@@ -79,7 +79,7 @@ export default async function RoomsPage({
   const rooms = (roomData ?? []) as unknown as Room[];
 
   return (
-    <div className="mx-auto max-w-4xl p-4 sm:p-8">
+    <div className="p-4 sm:p-8">
       <PageHeader title="ห้องพัก" subtitle={hotel.name} />
 
       {/* property switcher — โชว์เฉพาะโรงแรมหลายสาขา */}

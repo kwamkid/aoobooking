@@ -48,7 +48,7 @@ export default async function PropertiesPage({
   // ── โหมดสาขาเดียว: โชว์ตั้งค่าโรงแรม (สาขาหลัก) ตรงๆ + ปุ่มเปิดหลายสาขา ──
   if (!multi) {
     return (
-      <div className="mx-auto max-w-4xl p-4 sm:p-8">
+      <div className="p-4 sm:p-8">
         <PageHeader
           title="ตั้งค่าโรงแรม"
           subtitle={hotel.name}
@@ -89,7 +89,7 @@ export default async function PropertiesPage({
     access.maxProperties !== null && properties.length >= access.maxProperties;
 
   return (
-    <div className="mx-auto max-w-4xl p-4 sm:p-8">
+    <div className="p-4 sm:p-8">
       <PageHeader
         title="สาขา"
         subtitle={`${hotel.name} · ${properties.length}${

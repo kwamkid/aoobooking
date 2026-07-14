@@ -39,7 +39,7 @@ export default async function NewBookingPage({
 
   if (properties.length === 0) {
     return (
-      <div className="mx-auto max-w-2xl p-4 sm:p-8">
+      <div className="p-4 sm:p-8">
         <h1 className="text-2xl font-bold text-fg">จองใหม่</h1>
         <p className="mt-4 text-fg-muted">
           ต้องตั้งค่าสาขา/ห้อง/ราคาก่อน —{" "}
@@ -52,7 +52,7 @@ export default async function NewBookingPage({
   }
 
   return (
-    <div className="mx-auto max-w-2xl p-4 sm:p-8">
+    <div className="p-4 sm:p-8">
       <div className="mb-4 flex items-center gap-3">
         <Link
           href={hotelHref("/bookings", hotel.slug)}

@@ -45,7 +45,7 @@ export default async function BookingsPage({
   const bookings = (data ?? []) as unknown as Booking[];
 
   return (
-    <div className="mx-auto max-w-4xl p-4 sm:p-8">
+    <div className="p-4 sm:p-8">
       <PageHeader
         title="การจอง"
         subtitle={hotel.name}

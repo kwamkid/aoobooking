@@ -68,7 +68,7 @@ export default async function GuestDetailPage({
   const stays = (staysData ?? []) as unknown as Stay[];
 
   return (
-    <div className="mx-auto max-w-3xl p-4 sm:p-8">
+    <div className="p-4 sm:p-8">
       <Link href={hotelHref("/guests", hotel.slug)} className="text-sm text-fg-muted underline">
         ← แขก
       </Link>

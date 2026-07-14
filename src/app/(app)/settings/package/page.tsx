@@ -37,7 +37,7 @@ export default async function PackageSettingsPage({
   const scheduledPkg = packages.find((p) => p.id === sub?.scheduled_package_id);
 
   return (
-    <div className="mx-auto max-w-4xl p-4 sm:p-8">
+    <div className="p-4 sm:p-8">
       <PageHeader
         title="แพ็กเกจ"
         subtitle={

@@ -46,14 +46,13 @@ export function ThemeToggle() {
           onClick={() => set(m)}
           title={label}
           aria-pressed={mode === m}
-          className={`flex items-center gap-1 rounded-[calc(var(--radius)-2px)] px-2.5 py-1 text-xs transition-colors ${
+          className={`flex items-center justify-center rounded-[calc(var(--radius)-2px)] p-1.5 transition-colors ${
             mode === m
               ? "bg-brand text-brand-fg"
               : "text-fg-muted hover:bg-bg-subtle"
           }`}
         >
-          <Icon size={14} />
-          <span className="hidden sm:inline">{label}</span>
+          <Icon size={16} />
         </button>
       ))}
     </div>
