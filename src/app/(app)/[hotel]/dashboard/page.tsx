@@ -1,6 +1,8 @@
 import { requireHotelMember } from "@/lib/auth";
 import { hotelHref } from "@/lib/hotel/href";
 import { PageHeader, Card, ButtonLink, Badge } from "@/components/ui";
+import { getSetupStatus } from "./setup-status";
+import { OnboardingChecklist } from "./onboarding-checklist";
 
 export default async function DashboardPage({
   params,
@@ -9,6 +11,7 @@ export default async function DashboardPage({
 }) {
   const { hotel: hotelSlug } = await params;
   const { hotel, role } = await requireHotelMember(hotelSlug);
+  const setup = await getSetupStatus(hotel.id);
 
   const quickLinks = [
     { href: "/bookings/new", label: "จองใหม่", primary: true },
@@ -28,23 +31,26 @@ export default async function DashboardPage({
         }
       />
 
-      <Card>
-        <h2 className="font-semibold text-fg">เริ่มใช้งาน</h2>
-        <p className="mt-1 text-sm text-fg-muted">
-          ตั้งค่าสาขา → เพิ่มห้อง → ตั้งราคา แล้วเริ่มรับจองได้เลย
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {quickLinks.map((l) => (
-            <ButtonLink
-              key={l.href}
-              href={hotelHref(l.href, hotel.slug)}
-              variant={l.primary ? "primary" : "secondary"}
-            >
-              {l.label}
-            </ButtonLink>
-          ))}
-        </div>
-      </Card>
+      {/* ยังตั้งค่าไม่ครบ → checklist เป็นสิ่งแรกที่เห็น · ครบแล้ว → quick links ปกติ */}
+      {!setup.allRequiredDone ? (
+        <OnboardingChecklist status={setup} hotelSlug={hotel.slug} />
+      ) : (
+        <Card>
+          <h2 className="font-semibold text-fg">ทางลัด</h2>
+          <p className="mt-1 text-sm text-fg-muted">เริ่มงานประจำวันได้เลย</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {quickLinks.map((l) => (
+              <ButtonLink
+                key={l.href}
+                href={hotelHref(l.href, hotel.slug)}
+                variant={l.primary ? "primary" : "secondary"}
+              >
+                {l.label}
+              </ButtonLink>
+            ))}
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

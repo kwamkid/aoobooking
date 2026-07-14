@@ -32,7 +32,7 @@ export function LoginForm() {
     <button
       onClick={signInWithGoogle}
       disabled={loading}
-      className="flex items-center gap-3 rounded-(--radius) border border-border-strong bg-bg-elevated px-6 py-3 font-medium text-fg transition hover:bg-bg-subtle disabled:opacity-50"
+      className="flex h-12 w-full items-center justify-center gap-3 rounded-(--radius) border border-border-strong bg-bg-elevated font-medium text-fg transition hover:bg-bg-subtle disabled:opacity-50"
     >
       <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden>
         <path
