@@ -1657,6 +1657,15 @@ export type Database = {
       }
       can_edit_hotel: { Args: { p_hotel_id: string }; Returns: boolean }
       can_manage_hotel: { Args: { p_hotel_id: string }; Returns: boolean }
+      cancel_booking: {
+        Args: { p_booking_id: string; p_reason?: string }
+        Returns: Json
+      }
+      check_in_booking: {
+        Args: { p_booking_id: string; p_room_assignments?: Json }
+        Returns: undefined
+      }
+      check_out_booking: { Args: { p_booking_id: string }; Returns: undefined }
       check_package_fits: {
         Args: { p_hotel_id: string; p_package_id: string }
         Returns: string[]
@@ -1700,6 +1709,16 @@ export type Database = {
         Args: { p_room_type_id: string }
         Returns: undefined
       }
+      record_payment: {
+        Args: {
+          p_amount_satang: number
+          p_booking_id: string
+          p_method: Database["public"]["Enums"]["payment_method"]
+          p_note?: string
+          p_slip_path?: string
+        }
+        Returns: string
+      }
       user_can: {
         Args: { p_hotel_id: string; p_permission: string }
         Returns: boolean
@@ -1707,6 +1726,10 @@ export type Database = {
       user_role_in_hotel: {
         Args: { p_hotel_id: string }
         Returns: Database["public"]["Enums"]["hotel_role"]
+      }
+      verify_slip_payment: {
+        Args: { p_approve: boolean; p_payment_id: string }
+        Returns: undefined
       }
     }
     Enums: {
