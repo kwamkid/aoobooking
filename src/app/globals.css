@@ -177,7 +177,11 @@ body {
 /* ============================================================================
    Component base classes (เรียกผ่าน class — ไม่ inline)
    shared component ใช้ class เหล่านี้ (src/components/ui/*)
+   ⚠️ ต้องอยู่ใน @layer components — ให้ Tailwind utilities (pl-9 ฯลฯ) override ได้
+   (CSS นอก layer ชนะ layer เสมอ → utilities จะแพ้ = บั๊ก SearchBox icon ทับข้อความ)
    ============================================================================ */
+
+@layer components {
 
 /* --- buttons --- */
 .btn {
@@ -292,3 +296,5 @@ select.field {
 
 /* --- surface helpers --- */
 .divider { border-top: 1px solid var(--border); }
+
+} /* end @layer components */
