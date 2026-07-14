@@ -20,6 +20,7 @@ import {
   ThemeToggle,
 } from "@/components/ui";
 import { ThemePanel } from "./theme-panel";
+import { ToastDemo, ModalDemo, PickerDemo, DataTableDemo } from "./interactive-demos";
 
 // ============================================================================
 // /design — Design System showcase (DEV เท่านั้น)
@@ -202,9 +203,11 @@ export default function DesignSystemPage() {
         {/* แถวเรียงกันโชว์ว่า input/select/button สูงเท่ากันเป๊ะ */}
         <div className="flex flex-wrap items-end gap-2">
           <Input placeholder="input" className="w-40" />
-          <Select className="w-40">
-            <option>select</option>
-          </Select>
+          <Select
+            className="w-40"
+            defaultValue="select"
+            options={[{ value: "select", label: "select" }]}
+          />
           <Button>ปุ่ม</Button>
           <Button variant="secondary">secondary</Button>
         </div>
@@ -214,10 +217,13 @@ export default function DesignSystemPage() {
             <Input placeholder="พิมพ์ข้อความ…" />
           </Field>
           <Field label="Select">
-            <Select>
-              <option>ตัวเลือก 1</option>
-              <option>ตัวเลือก 2</option>
-            </Select>
+            <Select
+              defaultValue="1"
+              options={[
+                { value: "1", label: "ตัวเลือก 1" },
+                { value: "2", label: "ตัวเลือก 2" },
+              ]}
+            />
           </Field>
           <Field label="SearchBox" className="sm:col-span-2">
             <SearchBox placeholder="ค้นหา…" />
@@ -272,6 +278,26 @@ export default function DesignSystemPage() {
             </TR>
           </TBody>
         </Table>
+      </Section>
+
+      {/* ---- Toast ---- */}
+      <Section title="Toast — มุมขวาบน · auto-hide 4s">
+        <ToastDemo />
+      </Section>
+
+      {/* ---- Modal + ConfirmDialog ---- */}
+      <Section title="Modal & ConfirmDialog">
+        <ModalDemo />
+      </Section>
+
+      {/* ---- Date & Time Pickers ---- */}
+      <Section title="Date & Time Pickers — hand-rolled (พิมพ์เวลา '930' → 09:30)">
+        <PickerDemo />
+      </Section>
+
+      {/* ---- DataTable + Pagination ---- */}
+      <Section title="DataTable — sort ไทย (คลิกหัวคอลัมน์) + Pagination">
+        <DataTableDemo />
       </Section>
 
       {/* ---- EmptyState + SVG art ---- */}

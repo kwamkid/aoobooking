@@ -118,52 +118,37 @@ export function BookingWizard({
           <Field label="สาขา" className="sm:col-span-2">
             <Select
               value={propertyId}
-              onChange={(e) => {
-                setPropertyId(e.target.value);
+              onChange={(v) => {
+                setPropertyId(v);
                 setRoomTypeId("");
                 setRatePlanId("");
                 resetAvail();
               }}
-            >
-              {properties.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </Select>
+              options={properties.map((p) => ({ value: p.id, label: p.name }))}
+            />
           </Field>
 
           <Field label="ประเภทห้อง">
             <Select
               value={roomTypeId}
-              onChange={(e) => {
-                setRoomTypeId(e.target.value);
+              onChange={(v) => {
+                setRoomTypeId(v);
                 resetAvail();
               }}
-            >
-              <option value="">— เลือก —</option>
-              {propRoomTypes.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name}
-                </option>
-              ))}
-            </Select>
+              placeholder="— เลือก —"
+              options={propRoomTypes.map((r) => ({ value: r.id, label: r.name }))}
+            />
           </Field>
           <Field label="Rate plan">
             <Select
               value={ratePlanId}
-              onChange={(e) => {
-                setRatePlanId(e.target.value);
+              onChange={(v) => {
+                setRatePlanId(v);
                 resetAvail();
               }}
-            >
-              <option value="">— เลือก —</option>
-              {propRatePlans.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name}
-                </option>
-              ))}
-            </Select>
+              placeholder="— เลือก —"
+              options={propRatePlans.map((r) => ({ value: r.id, label: r.name }))}
+            />
           </Field>
 
           <Field label="เช็คอิน">

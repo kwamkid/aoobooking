@@ -57,11 +57,16 @@ export function GuestIdForm({
         <input type="hidden" name="hotelSlug" value={hotelSlug} />
         <input type="hidden" name="guestId" value={guestId} />
         <Field label="ประเภทเอกสาร">
-          <Select name="id_type" defaultValue={idType} className="w-full">
-            <option value="">—</option>
-            <option value="national_id">บัตรประชาชน</option>
-            <option value="passport">Passport</option>
-          </Select>
+          <Select
+            name="id_type"
+            defaultValue={idType}
+            className="w-full"
+            options={[
+              { value: "", label: "—" },
+              { value: "national_id", label: "บัตรประชาชน" },
+              { value: "passport", label: "Passport" },
+            ]}
+          />
         </Field>
         <Field label="เลขที่">
           <Input name="id_number" defaultValue={idNumber} className="w-full" />

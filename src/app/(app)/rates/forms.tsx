@@ -44,15 +44,16 @@ export function RatePlanForm({
         <Select
           name="deposit_type"
           value={depType}
-          onChange={(e) => setDepType(e.target.value)}
+          onChange={setDepType}
           className="w-full"
-        >
-          <option value="none">ไม่เก็บ (จ่ายที่โรงแรม)</option>
-          <option value="first_night">คืนแรก</option>
-          <option value="percent">เปอร์เซ็นต์</option>
-          <option value="fixed">จำนวนเงินคงที่</option>
-          <option value="full">เต็มจำนวน</option>
-        </Select>
+          options={[
+            { value: "none", label: "ไม่เก็บ (จ่ายที่โรงแรม)" },
+            { value: "first_night", label: "คืนแรก" },
+            { value: "percent", label: "เปอร์เซ็นต์" },
+            { value: "fixed", label: "จำนวนเงินคงที่" },
+            { value: "full", label: "เต็มจำนวน" },
+          ]}
+        />
       </Field>
       <Field label={depType === "percent" ? "%" : depType === "fixed" ? "บาท" : "—"}>
         <Input
@@ -68,12 +69,13 @@ export function RatePlanForm({
         <Select
           name="cancel_type"
           value={cancelType}
-          onChange={(e) => setCancelType(e.target.value)}
+          onChange={setCancelType}
           className="w-full"
-        >
-          <option value="free_until">ฟรีก่อน N วัน</option>
-          <option value="non_refundable">ไม่คืนเงิน</option>
-        </Select>
+          options={[
+            { value: "free_until", label: "ฟรีก่อน N วัน" },
+            { value: "non_refundable", label: "ไม่คืนเงิน" },
+          ]}
+        />
       </Field>
       <Field label="ยกเลิกฟรีก่อน (วัน)">
         <Input
@@ -112,22 +114,20 @@ export function BulkPriceForm({
       <input type="hidden" name="hotelSlug" value={hotelSlug} />
 
       <Field label="Rate plan">
-        <Select name="ratePlanId" className="w-full">
-          {ratePlans.map((r) => (
-            <option key={r.id} value={r.id}>
-              {r.name}
-            </option>
-          ))}
-        </Select>
+        <Select
+          name="ratePlanId"
+          className="w-full"
+          defaultValue={ratePlans[0]?.id ?? ""}
+          options={ratePlans.map((r) => ({ value: r.id, label: r.name }))}
+        />
       </Field>
       <Field label="ประเภทห้อง">
-        <Select name="roomTypeId" className="w-full">
-          {roomTypes.map((r) => (
-            <option key={r.id} value={r.id}>
-              {r.name}
-            </option>
-          ))}
-        </Select>
+        <Select
+          name="roomTypeId"
+          className="w-full"
+          defaultValue={roomTypes[0]?.id ?? ""}
+          options={roomTypes.map((r) => ({ value: r.id, label: r.name }))}
+        />
       </Field>
 
       <Field label="ตั้งแต่วันที่">

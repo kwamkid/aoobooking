@@ -156,14 +156,14 @@ export default async function ReportsPage({
         </Field>
         {properties.length > 1 && (
           <Field label="สาขา">
-            <Select name="p" defaultValue={p ?? ""}>
-              <option value="">ทุกสาขา</option>
-              {properties.map((pr) => (
-                <option key={pr.id} value={pr.id}>
-                  {pr.name}
-                </option>
-              ))}
-            </Select>
+            <Select
+              name="p"
+              defaultValue={p ?? ""}
+              options={[
+                { value: "", label: "ทุกสาขา" },
+                ...properties.map((pr) => ({ value: pr.id, label: pr.name })),
+              ]}
+            />
           </Field>
         )}
         <Button type="submit">ดูรายงาน</Button>

@@ -65,6 +65,8 @@
   --shadow-sm: 0 1px 2px rgba(23, 21, 15, 0.06);
   --shadow: 0 2px 8px rgba(23, 21, 15, 0.08);
   --shadow-lg: 0 8px 30px rgba(23, 21, 15, 0.12);
+  /* เงานุ่มสี brand — เมนู active ใน sidebar (แบบ codelab) */
+  --shadow-brand: 0 4px 12px color-mix(in srgb, var(--brand) 30%, transparent);
 }
 
 /* dark ตาม OS (เฉพาะเมื่อไม่ได้ตั้ง data-theme=light ทับ) */
@@ -296,5 +298,28 @@ select.field {
 
 /* --- surface helpers --- */
 .divider { border-top: 1px solid var(--border); }
+
+/* --- toast (มุมขวาบน — เลื่อนเข้าจากขวา / จางออกผ่าน transition ใน component) --- */
+@keyframes toast-slide-in {
+  from { opacity: 0; transform: translateX(1rem); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.toast-enter { animation: toast-slide-in 0.2s ease-out; }
+
+/* --- modal (scrim จาง + panel เด้งเข้าเบาๆ) --- */
+@keyframes modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes modal-pop-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.modal-scrim {
+  /* scrim มืดเสมอทั้ง light/dark — อิง token neutral ไม่ hardcode สี */
+  background: color-mix(in srgb, var(--c-neutral-900) 55%, transparent);
+  animation: modal-fade-in 0.15s ease-out;
+}
+.modal-panel { animation: modal-pop-in 0.15s ease-out; }
 
 } /* end @layer components */

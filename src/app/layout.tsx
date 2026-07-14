@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { IBM_Plex_Sans_Thai } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
+import { ToastProvider } from "@/components/ui/toast";
 import "./globals.css";
 
 // IBM Plex Sans Thai — font หลักทั้งระบบ (rules.md #16)
@@ -26,7 +27,9 @@ export default async function RootLayout({
   return (
     <html lang={locale} className={ibmPlexSansThai.variable} suppressHydrationWarning>
       <body className="antialiased">
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

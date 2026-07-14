@@ -27,11 +27,6 @@ export function Input({ className, ...props }: ComponentProps<"input">) {
   return <input className={cx("field", className)} {...props} />;
 }
 
-// Select — dropdown มาตรฐาน
-export function Select({ className, ...props }: ComponentProps<"select">) {
-  return <select className={cx("field", className)} {...props} />;
-}
-
 // Textarea
 export function Textarea({ className, ...props }: ComponentProps<"textarea">) {
   return <textarea className={cx("field", className)} {...props} />;
