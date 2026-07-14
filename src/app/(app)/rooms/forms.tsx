@@ -1,20 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { Field, Input, Button } from "@/components/ui";
+import { Field, Input, Button, useToast } from "@/components/ui";
 import { createRoomType, createRoom } from "./actions";
 
-function useSubmit(action: (fd: FormData) => Promise<void>) {
-  const [error, setError] = useState<string | null>(null);
+function useSubmit(action: (fd: FormData) => Promise<void>, successMsg: string) {
+  const toast = useToast();
   async function onSubmit(fd: FormData) {
-    setError(null);
     try {
       await action(fd);
+      toast.ok(successMsg);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "เกิดข้อผิดพลาด");
+      toast.err(e instanceof Error ? e.message : "เกิดข้อผิดพลาด");
     }
   }
-  return { onSubmit, error };
+  return { onSubmit };
 }
 
 export function RoomTypeForm({
@@ -24,53 +23,49 @@ export function RoomTypeForm({
   hotelSlug: string;
   propertyId: string;
 }) {
-  const { onSubmit, error } = useSubmit(createRoomType);
+  const { onSubmit } = useSubmit(createRoomType, "เพิ่มประเภทห้องแล้ว");
   return (
-    <form action={onSubmit} className="grid max-w-2xl grid-cols-3 gap-2">
+    <form action={onSubmit} className="max-w-2xl space-y-4">
       <input type="hidden" name="hotelSlug" value={hotelSlug} />
       <input type="hidden" name="propertyId" value={propertyId} />
-      <Field className="col-span-3">
-        <Input name="name" required placeholder="ชื่อ เช่น Deluxe" />
+
+      <Field label="ชื่อประเภทห้อง">
+        <Input name="name" required placeholder="เช่น Deluxe, Superior, Suite" />
       </Field>
-      <Input
-        type="number"
-        name="base_occupancy"
-        defaultValue={2}
-        min={1}
-        placeholder="พักพื้นฐาน"
-        title="occupancy พื้นฐาน"
-      />
-      <Input
-        type="number"
-        name="max_occupancy"
-        defaultValue={2}
-        min={1}
-        placeholder="พักสูงสุด"
-        title="occupancy สูงสุด"
-      />
-      <Input
-        type="number"
-        name="child_age_limit"
-        defaultValue={12}
-        placeholder="อายุเด็ก ≤"
-        title="เด็กอายุไม่เกิน (ปี)"
-      />
-      <Input
-        type="number"
-        name="extra_adult"
-        defaultValue={0}
-        placeholder="ผู้ใหญ่เพิ่ม ฿"
-        title="ค่าผู้ใหญ่เพิ่ม (บาท/คน/คืน)"
-      />
-      <Input
-        type="number"
-        name="extra_child"
-        defaultValue={0}
-        placeholder="เด็กเพิ่ม ฿"
-        title="ค่าเด็กเพิ่ม (บาท/คน/คืน)"
-      />
-      <Button type="submit">เพิ่มประเภท</Button>
-      {error && <p className="col-span-3 text-sm text-danger">{error}</p>}
+
+      {/* จำนวนผู้เข้าพัก */}
+      <div>
+        <p className="mb-1.5 text-sm font-medium text-fg">จำนวนผู้เข้าพัก</p>
+        <div className="grid grid-cols-3 gap-2">
+          <Field label="พักปกติ (คน)">
+            <Input type="number" name="base_occupancy" defaultValue={2} min={1} />
+          </Field>
+          <Field label="พักได้สูงสุด (คน)">
+            <Input type="number" name="max_occupancy" defaultValue={2} min={1} />
+          </Field>
+          <Field label="เด็กอายุไม่เกิน (ปี)">
+            <Input type="number" name="child_age_limit" defaultValue={12} min={0} />
+          </Field>
+        </div>
+      </div>
+
+      {/* ค่าเข้าพักเกินจำนวนปกติ */}
+      <div>
+        <p className="mb-1.5 text-sm font-medium text-fg">
+          ค่าเสริมเมื่อพักเกินจำนวนปกติ{" "}
+          <span className="font-normal text-fg-subtle">(บาท/คน/คืน · 0 = ไม่คิด)</span>
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          <Field label="ผู้ใหญ่เพิ่ม 1 คน">
+            <Input type="number" name="extra_adult" defaultValue={0} min={0} />
+          </Field>
+          <Field label="เด็กเพิ่ม 1 คน">
+            <Input type="number" name="extra_child" defaultValue={0} min={0} />
+          </Field>
+        </div>
+      </div>
+
+      <Button type="submit">เพิ่มประเภทห้อง</Button>
     </form>
   );
 }
@@ -84,18 +79,21 @@ export function RoomForm({
   propertyId: string;
   roomTypeId: string;
 }) {
-  const { onSubmit, error } = useSubmit(createRoom);
+  const { onSubmit } = useSubmit(createRoom, "เพิ่มห้องแล้ว");
   return (
-    <form action={onSubmit} className="flex flex-wrap items-center gap-2">
+    <form action={onSubmit} className="flex flex-wrap items-end gap-2">
       <input type="hidden" name="hotelSlug" value={hotelSlug} />
       <input type="hidden" name="propertyId" value={propertyId} />
       <input type="hidden" name="roomTypeId" value={roomTypeId} />
-      <Input name="room_number" required placeholder="เลขห้อง" />
-      <Input name="floor" placeholder="ชั้น" className="w-20" />
+      <Field label="เลขห้อง">
+        <Input name="room_number" required placeholder="เช่น 101" className="w-32" />
+      </Field>
+      <Field label="ชั้น">
+        <Input name="floor" placeholder="เช่น 1" className="w-24" />
+      </Field>
       <Button type="submit" variant="secondary">
         + เพิ่มห้อง
       </Button>
-      {error && <p className="w-full text-sm text-danger">{error}</p>}
     </form>
   );
 }

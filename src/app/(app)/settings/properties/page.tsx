@@ -2,7 +2,7 @@ import { requireHotelMember } from "@/lib/auth";
 import { can } from "@/lib/permission";
 import { resolveAccess } from "@/lib/package/resolve-access";
 import { createClient } from "@/lib/supabase/server";
-import { PageHeader, Card, Button, EmptyState } from "@/components/ui";
+import { PageHeader, Card, Button, EmptyState, DeleteButton } from "@/components/ui";
 import { PropertyForm } from "./property-form";
 import { deleteProperty, toggleMultiProperty } from "./actions";
 
@@ -115,13 +115,16 @@ export default async function PropertiesPage({
                     <>
                       <PropertyForm hotelSlug={hotel.slug} property={p} />
                       {properties.length > 1 && (
-                        <form action={deleteProperty} className="mt-3">
-                          <input type="hidden" name="hotelSlug" value={hotel.slug} />
-                          <input type="hidden" name="propertyId" value={p.id} />
-                          <Button variant="danger" size="sm">
-                            ปิดสาขานี้
-                          </Button>
-                        </form>
+                        <div className="mt-3">
+                          <DeleteButton
+                            action={deleteProperty}
+                            hiddenFields={{ hotelSlug: hotel.slug, propertyId: p.id }}
+                            label="ปิดสาขานี้"
+                            confirmTitle={`ปิดสาขา "${p.name}"?`}
+                            confirmDescription="สาขานี้จะถูกซ่อน (ข้อมูลยังอยู่) — เปิดกลับได้ภายหลัง"
+                            successMessage="ปิดสาขาแล้ว"
+                          />
+                        </div>
                       )}
                     </>
                   ) : (

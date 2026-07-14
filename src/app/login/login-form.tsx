@@ -4,10 +4,12 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
+import { useToast } from "@/components/ui";
 
 export function LoginForm() {
   const t = useTranslations("auth");
   const searchParams = useSearchParams();
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
 
   async function signInWithGoogle() {
@@ -22,7 +24,7 @@ export function LoginForm() {
     });
     if (error) {
       setLoading(false);
-      alert(error.message);
+      toast.err(error.message);
     }
   }
 
@@ -30,7 +32,7 @@ export function LoginForm() {
     <button
       onClick={signInWithGoogle}
       disabled={loading}
-      className="flex items-center gap-3 rounded-lg border border-neutral-300 bg-white px-6 py-3 font-medium text-neutral-900 transition hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white dark:hover:bg-neutral-800"
+      className="flex items-center gap-3 rounded-(--radius) border border-border-strong bg-bg-elevated px-6 py-3 font-medium text-fg transition hover:bg-bg-subtle disabled:opacity-50"
     >
       <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden>
         <path

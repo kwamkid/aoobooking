@@ -14,6 +14,7 @@ export { ThemeToggle } from "./theme-toggle";
 export { ToastProvider, useToast, Toast } from "./toast";
 export { Modal } from "./modal";
 export { ConfirmDialog, useConfirm } from "./confirm-dialog";
+export { DeleteButton } from "./delete-button";
 export { DataTable, type DataTableColumn } from "./data-table";
 export { Pagination } from "./pagination";
 export { DateRangePicker, toIsoDate, type DateRange } from "./date-range-picker";

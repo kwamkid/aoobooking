@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { Field, Input, Button } from "@/components/ui";
+import { Field, Input, Button, useToast } from "@/components/ui";
 import { createProperty, updateProperty } from "./actions";
 
 type Property = {
@@ -26,15 +25,15 @@ export function PropertyForm({
   property?: Property;
 }) {
   const isEdit = !!property;
-  const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
 
   async function onSubmit(fd: FormData) {
-    setError(null);
     try {
       if (isEdit) await updateProperty(fd);
       else await createProperty(fd);
+      toast.ok(isEdit ? "บันทึกสาขาแล้ว" : "เพิ่มสาขาแล้ว");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "เกิดข้อผิดพลาด");
+      toast.err(e instanceof Error ? e.message : "เกิดข้อผิดพลาด");
     }
   }
 
@@ -108,7 +107,6 @@ export function PropertyForm({
         </p>
       </div>
 
-      {error && <p className="text-sm text-danger sm:col-span-2">{error}</p>}
 
       <div className="sm:col-span-2">
         <Button type="submit">{isEdit ? "บันทึก" : "เพิ่มสาขา"}</Button>

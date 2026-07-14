@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { Field, Input, Select, Button } from "@/components/ui";
+import { Field, Input, Select, Button, useToast } from "@/components/ui";
 import { updateGuestId, eraseGuestId } from "../actions";
 
 export function GuestIdForm({
@@ -19,25 +18,22 @@ export function GuestIdForm({
   hasConsent: boolean;
   canEdit: boolean;
 }) {
-  const [error, setError] = useState<string | null>(null);
-  const [ok, setOk] = useState(false);
+  const toast = useToast();
 
   async function onSubmit(fd: FormData) {
-    setError(null);
-    setOk(false);
     try {
       await updateGuestId(fd);
-      setOk(true);
+      toast.ok("บันทึกแล้ว");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ");
+      toast.err(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ");
     }
   }
   async function onErase(fd: FormData) {
-    setError(null);
     try {
       await eraseGuestId(fd);
+      toast.ok("ลบข้อมูลบัตรแล้ว");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "ลบไม่สำเร็จ");
+      toast.err(e instanceof Error ? e.message : "ลบไม่สำเร็จ");
     }
   }
 
@@ -75,9 +71,6 @@ export function GuestIdForm({
           <input type="checkbox" name="pdpa_consent" defaultChecked={hasConsent} />
           แขกยินยอมให้เก็บข้อมูลส่วนบุคคล (PDPA)
         </label>
-
-        {error && <p className="col-span-2 text-sm text-danger">{error}</p>}
-        {ok && <p className="col-span-2 text-sm text-success">บันทึกแล้ว</p>}
 
         <div className="col-span-2 flex items-center gap-2">
           <Button type="submit">บันทึก</Button>

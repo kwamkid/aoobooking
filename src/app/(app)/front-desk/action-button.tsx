@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Button } from "@/components/ui";
+import { useTransition } from "react";
+import { Button, useToast } from "@/components/ui";
 
 // ปุ่มเรียก server action + โชว์ error จาก RPC (เช่น "ยังมียอดค้าง" ตอน check-out)
 export function ActionButton({
@@ -18,10 +18,9 @@ export function ActionButton({
   variant?: "primary" | "disabled-hint";
 }) {
   const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
 
   function onClick() {
-    setError(null);
     const fd = new FormData();
     fd.set("hotelSlug", hotelSlug);
     fd.set("bookingId", bookingId);
@@ -29,7 +28,7 @@ export function ActionButton({
       try {
         await action(fd);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "ทำรายการไม่สำเร็จ");
+        toast.err(e instanceof Error ? e.message : "ทำรายการไม่สำเร็จ");
       }
     });
   }
@@ -45,7 +44,6 @@ export function ActionButton({
       >
         {pending ? "…" : label}
       </Button>
-      {error && <p className="mt-1 max-w-48 text-xs text-danger">{error}</p>}
     </div>
   );
 }

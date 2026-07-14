@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { hotelHref } from "@/lib/hotel/href";
-import { Card, Field, Input, Select, Button } from "@/components/ui";
+import { Card, Field, Input, Select, Button, useToast } from "@/components/ui";
 import {
   checkAvailability,
   submitBooking,
@@ -40,7 +40,7 @@ export function BookingWizard({
   const [avail, setAvail] = useState<AvailabilityResult | null>(null);
   const [checking, setChecking] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
 
   const propRoomTypes = useMemo(
     () => roomTypes.filter((r) => r.property_id === propertyId),
@@ -55,7 +55,6 @@ export function BookingWizard({
     !!(propertyId && roomTypeId && ratePlanId && checkIn && checkOut) && rooms >= 1;
 
   async function onCheck() {
-    setError(null);
     setAvail(null);
     setChecking(true);
     try {
@@ -71,7 +70,7 @@ export function BookingWizard({
       });
       setAvail(res);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "ตรวจสอบไม่สำเร็จ");
+      toast.err(e instanceof Error ? e.message : "ตรวจสอบไม่สำเร็จ");
     } finally {
       setChecking(false);
     }
@@ -79,10 +78,9 @@ export function BookingWizard({
 
   async function onSubmit() {
     if (!guestName.trim()) {
-      setError("กรุณาใส่ชื่อแขก");
+      toast.err("กรุณาใส่ชื่อแขก");
       return;
     }
-    setError(null);
     setSubmitting(true);
     try {
       const { bookingId } = await submitBooking({
@@ -99,9 +97,10 @@ export function BookingWizard({
         guestPhone: guestPhone.trim() || undefined,
         guestEmail: guestEmail.trim() || undefined,
       });
+      toast.ok("จองสำเร็จ");
       router.push(hotelHref(`/bookings?created=${bookingId}`, hotelSlug));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "จองไม่สำเร็จ");
+      toast.err(e instanceof Error ? e.message : "จองไม่สำเร็จ");
       setSubmitting(false);
     }
   }
@@ -273,8 +272,6 @@ export function BookingWizard({
           </Button>
         </>
       )}
-
-      {error && <p className="text-sm text-danger">{error}</p>}
     </div>
   );
 }

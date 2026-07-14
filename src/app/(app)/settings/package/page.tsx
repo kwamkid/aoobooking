@@ -2,11 +2,22 @@ import Link from "next/link";
 import { requireHotelMember, isOwner } from "@/lib/auth";
 import { listPublicPackages, getSubscription } from "@/lib/billing";
 import { hotelHref } from "@/lib/hotel/href";
+import { PageHeader, Card, Button, Badge } from "@/components/ui";
 import {
   upgradePackage,
   scheduleDowngrade,
   cancelScheduledDowngrade,
 } from "./actions";
+
+type Tone = "neutral" | "brand" | "success" | "warning" | "danger" | "info";
+const SUB_STATUS_TONE: Record<string, Tone> = {
+  active: "success",
+  trialing: "info",
+  grace: "warning",
+  past_due: "warning",
+  canceled: "danger",
+  cancelled: "danger",
+};
 
 export default async function PackageSettingsPage({
   searchParams,
@@ -26,35 +37,55 @@ export default async function PackageSettingsPage({
   const scheduledPkg = packages.find((p) => p.id === sub?.scheduled_package_id);
 
   return (
-    <div className="mx-auto max-w-4xl p-8">
-      <h1 className="text-2xl font-bold">แพ็กเกจ</h1>
-      <p className="mt-1 text-neutral-500">
-        {hotel.name} ·{" "}
-        <Link href={hotelHref("/settings/billing", hotel.slug)} className="underline">
-          ประวัติการชำระเงิน
-        </Link>
-      </p>
+    <div className="mx-auto max-w-4xl p-4 sm:p-8">
+      <PageHeader
+        title="แพ็กเกจ"
+        subtitle={
+          <>
+            {hotel.name} ·{" "}
+            <Link
+              href={hotelHref("/settings/billing", hotel.slug)}
+              className="text-brand underline"
+            >
+              ประวัติการชำระเงิน
+            </Link>
+          </>
+        }
+      />
 
       {sub && (
-        <div className="mt-4 rounded-lg border border-neutral-200 p-4 text-sm dark:border-neutral-800">
-          สถานะ: <b>{sub.status}</b> · รอบปัจจุบันถึง{" "}
-          {new Date(sub.current_period_end).toLocaleDateString("th-TH")}
+        <Card className="text-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-fg-muted">สถานะ:</span>
+            <Badge tone={SUB_STATUS_TONE[sub.status] ?? "neutral"}>
+              {sub.status}
+            </Badge>
+            <span className="text-fg-muted">
+              · รอบปัจจุบันถึง{" "}
+              {new Date(sub.current_period_end).toLocaleDateString("th-TH")}
+            </span>
+          </div>
           {scheduledPkg && (
-            <span className="ml-2 text-amber-600">
-              — นัดดาวน์เกรดเป็น <b>{scheduledPkg.name}</b> ตอนจบรอบ
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-warning">
+              <span>
+                นัดดาวน์เกรดเป็น <b className="font-semibold">{scheduledPkg.name}</b>{" "}
+                ตอนจบรอบ
+              </span>
               {owner && (
-                <form action={cancelScheduledDowngrade} className="mt-1 inline">
+                <form action={cancelScheduledDowngrade}>
                   <input type="hidden" name="hotelSlug" value={hotel.slug} />
-                  <button className="ml-2 underline">ยกเลิกนัด</button>
+                  <Button type="submit" variant="ghost" size="sm">
+                    ยกเลิกนัด
+                  </Button>
                 </form>
               )}
-            </span>
+            </div>
           )}
-        </div>
+        </Card>
       )}
 
       {!owner && (
-        <p className="mt-4 text-sm text-amber-600">
+        <p className="mt-4 text-sm text-warning">
           เฉพาะเจ้าของ (owner) เท่านั้นที่เปลี่ยนแพ็กเกจได้
         </p>
       )}
@@ -64,30 +95,24 @@ export default async function PackageSettingsPage({
           const isCurrent = pkg.id === hotel.package_id;
           const isUpgrade = currentIdx === -1 || idx > currentIdx;
           return (
-            <div
+            <Card
               key={pkg.id}
-              className={`rounded-xl border p-5 ${
-                isCurrent
-                  ? "border-neutral-900 dark:border-white"
-                  : "border-neutral-200 dark:border-neutral-800"
-              }`}
+              className={
+                isCurrent ? "border-border-strong ring-1 ring-brand" : undefined
+              }
             >
-              <div className="flex items-baseline justify-between">
-                <h2 className="font-bold">{pkg.name}</h2>
-                {isCurrent && (
-                  <span className="text-xs font-medium text-green-600">
-                    แพ็กเกจปัจจุบัน
-                  </span>
-                )}
+              <div className="flex items-baseline justify-between gap-2">
+                <h2 className="font-bold text-fg">{pkg.name}</h2>
+                {isCurrent && <Badge tone="brand">แพ็กเกจปัจจุบัน</Badge>}
               </div>
-              <div className="mt-1 text-2xl font-bold">
+              <div className="mt-1 text-2xl font-bold text-fg">
                 {pkg.price_thb_monthly == null
                   ? "ติดต่อเรา"
                   : pkg.price_thb_monthly === 0
                     ? "ฟรี"
                     : `฿${pkg.price_thb_monthly.toLocaleString()}/ด.`}
               </div>
-              <ul className="mt-3 space-y-1 text-sm text-neutral-500">
+              <ul className="mt-3 space-y-1 text-sm text-fg-muted">
                 <li>สาขา: {pkg.max_properties ?? "ไม่จำกัด"}</li>
                 <li>ห้องพัก: {pkg.max_rooms ?? "ไม่จำกัด"}</li>
                 <li>ทีมงาน: {pkg.max_team_members ?? "ไม่จำกัด"}</li>
@@ -104,27 +129,25 @@ export default async function PackageSettingsPage({
                   {isUpgrade && (
                     <input type="hidden" name="cycle" value="monthly" />
                   )}
-                  <button
-                    className={`w-full rounded-lg px-4 py-2 text-sm font-medium transition ${
-                      isUpgrade
-                        ? "bg-neutral-900 text-white hover:bg-neutral-700 dark:bg-white dark:text-neutral-900"
-                        : "border border-neutral-300 hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
-                    }`}
+                  <Button
+                    type="submit"
+                    variant={isUpgrade ? "primary" : "secondary"}
+                    className="w-full"
                   >
                     {isUpgrade
                       ? pkg.price_thb_monthly === 0
                         ? "เปลี่ยนเป็นแพ็กนี้"
                         : "อัพเกรด"
                       : "ดาวน์เกรด (มีผลตอนจบรอบ)"}
-                  </button>
+                  </Button>
                 </form>
               )}
-            </div>
+            </Card>
           );
         })}
       </div>
 
-      <p className="mt-6 text-xs text-neutral-400">
+      <p className="mt-6 text-xs text-fg-subtle">
         อัพเกรดมีผลทันทีหลังชำระ (เริ่มนับรอบใหม่) · ดาวน์เกรดมีผลตอนจบรอบปัจจุบัน
         ไม่คืนเงินส่วนต่าง · ทุกการเปลี่ยนแปลงถูกบันทึก log
       </p>

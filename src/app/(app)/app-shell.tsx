@@ -146,12 +146,21 @@ export function AppShell({
           }`}
         >
           {!rail && (
-            <div>
-              <div className="text-base font-bold text-brand">AooBooking</div>
-              {slug && <div className="font-mono text-xs text-fg-subtle">{slug}</div>}
+            <div className="flex items-center gap-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/aoobooking-logo.svg" alt="" className="h-8 w-8 shrink-0" />
+              <div className="min-w-0">
+                <div className="truncate text-base font-bold text-brand">AooBooking</div>
+                {slug && (
+                  <div className="truncate font-mono text-xs text-fg-subtle">{slug}</div>
+                )}
+              </div>
             </div>
           )}
-          {rail && <div className="text-lg font-bold text-brand">A</div>}
+          {rail && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src="/aoobooking-logo.svg" alt="AooBooking" className="h-8 w-8" />
+          )}
           {isMobile && (
             <button
               onClick={() => setMobileOpen(false)}

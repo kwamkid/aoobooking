@@ -1,23 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { Field, Input, Select, Button } from "@/components/ui";
+import { Field, Input, Select, Button, useToast } from "@/components/ui";
 import { createRatePlan, setBulkPrices } from "./actions";
 
-function useSubmit(action: (fd: FormData) => Promise<void>) {
-  const [error, setError] = useState<string | null>(null);
-  const [ok, setOk] = useState(false);
+function useSubmit(action: (fd: FormData) => Promise<void>, successMsg: string) {
+  const toast = useToast();
   async function onSubmit(fd: FormData) {
-    setError(null);
-    setOk(false);
     try {
       await action(fd);
-      setOk(true);
+      toast.ok(successMsg);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "เกิดข้อผิดพลาด");
+      toast.err(e instanceof Error ? e.message : "เกิดข้อผิดพลาด");
     }
   }
-  return { onSubmit, error, ok };
+  return { onSubmit };
 }
 
 export function RatePlanForm({
@@ -27,7 +24,7 @@ export function RatePlanForm({
   hotelSlug: string;
   propertyId: string;
 }) {
-  const { onSubmit, error } = useSubmit(createRatePlan);
+  const { onSubmit } = useSubmit(createRatePlan, "เพิ่ม rate plan แล้ว");
   const [depType, setDepType] = useState("none");
   const [cancelType, setCancelType] = useState("free_until");
 
@@ -91,7 +88,6 @@ export function RatePlanForm({
         <input type="checkbox" name="include_breakfast" /> รวมอาหารเช้า
       </label>
 
-      {error && <p className="col-span-2 text-sm text-danger">{error}</p>}
       <div className="col-span-2">
         <Button type="submit">เพิ่ม rate plan</Button>
       </div>
@@ -108,7 +104,7 @@ export function BulkPriceForm({
   ratePlans: { id: string; name: string }[];
   roomTypes: { id: string; name: string }[];
 }) {
-  const { onSubmit, error, ok } = useSubmit(setBulkPrices);
+  const { onSubmit } = useSubmit(setBulkPrices, "ตั้งราคาเรียบร้อย");
   return (
     <form action={onSubmit} className="grid max-w-2xl grid-cols-2 gap-3">
       <input type="hidden" name="hotelSlug" value={hotelSlug} />
@@ -144,8 +140,6 @@ export function BulkPriceForm({
         <Input type="number" name="min_stay" defaultValue={1} min={1} className="w-full" />
       </Field>
 
-      {error && <p className="col-span-2 text-sm text-danger">{error}</p>}
-      {ok && <p className="col-span-2 text-sm text-success">ตั้งราคาเรียบร้อย</p>}
       <div className="col-span-2">
         <Button type="submit">ตั้งราคาทั้งช่วง</Button>
       </div>
