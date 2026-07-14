@@ -6,6 +6,43 @@ import { requirePermission } from "@/lib/permission";
 import { assertWithinLimit } from "@/lib/package/resolve-access";
 import { createClient } from "@/lib/supabase/server";
 
+/** เปิด/ปิดโหมดหลายสาขา — เปิดแล้วโชว์ switcher + จัดการสาขาได้ (ปิดกลับได้ถ้ามีสาขาเดียว) */
+export async function toggleMultiProperty(fd: FormData) {
+  const hotelSlug = fd.get("hotelSlug") as string;
+  const enable = fd.get("enable") === "true";
+  const { hotel } = await requireHotelMember(hotelSlug);
+  await requirePermission(hotel.id, "settings.properties");
+
+  const supabase = await createClient();
+
+  // ปิดโหมดหลายสาขาได้เฉพาะเมื่อเหลือสาขาเดียว (กันข้อมูลสาขาอื่นหาย)
+  if (!enable) {
+    const { count } = await supabase
+      .from("properties")
+      .select("*", { count: "exact", head: true })
+      .eq("hotel_id", hotel.id)
+      .is("deleted_at", null);
+    if ((count ?? 0) > 1) {
+      throw new Error("ปิดโหมดหลายสาขาไม่ได้ — ต้องเหลือสาขาเดียวก่อน (ปิดสาขาอื่นก่อน)");
+    }
+  }
+
+  const { error } = await supabase
+    .from("hotels")
+    .update({ multi_property: enable, updated_at: new Date().toISOString() })
+    .eq("id", hotel.id);
+  if (error) throw new Error(error.message);
+
+  await supabase.rpc("log_audit", {
+    p_hotel_id: hotel.id,
+    p_action: "hotel.multi_property_changed",
+    p_entity_type: "hotel",
+    p_entity_id: hotel.id,
+    p_new: { multi_property: enable },
+  });
+  revalidatePath("/settings/properties");
+}
+
 // slug จากชื่อสาขา — a-z0-9 + ขีด (booking engine: /hotel/property)
 function slugify(name: string): string {
   const base = name

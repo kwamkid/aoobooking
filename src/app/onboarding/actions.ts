@@ -24,6 +24,7 @@ const RESERVED_SLUGS = new Set([
   "admin",
   "app",
   "www",
+  "design",
 ]);
 
 function slugify(input: string): string {

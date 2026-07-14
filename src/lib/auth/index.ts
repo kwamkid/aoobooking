@@ -61,7 +61,7 @@ export async function requireHotelMember(slug: string | undefined) {
 
   const { data: hotel } = await supabase
     .from("hotels")
-    .select("id, slug, name, base_currency, package_id")
+    .select("id, slug, name, base_currency, package_id, multi_property")
     .eq("slug", slug)
     .is("deleted_at", null)
     .single();

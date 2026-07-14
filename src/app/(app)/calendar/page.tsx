@@ -109,21 +109,22 @@ export default async function CalendarPage({
     <div className="mx-auto max-w-6xl p-4 sm:p-8">
       <PageHeader title="ปฏิทินห้องว่าง" />
 
-      {/* property switcher + month nav */}
+      {/* property switcher (เฉพาะหลายสาขา) + month nav */}
       <div className="flex flex-wrap items-center gap-2">
-        {properties.map((pr) => (
-          <Link
-            key={pr.id}
-            href={`${hotelHref("/calendar", hotel.slug)}&p=${pr.id}&m=${yy}-${String(mm).padStart(2, "0")}`}
-            className={`rounded-full px-3 py-1 text-sm ${
-              pr.id === activeProp.id
-                ? "bg-brand text-brand-fg"
-                : "border border-border text-fg-muted"
-            }`}
-          >
-            {pr.name}
-          </Link>
-        ))}
+        {hotel.multi_property &&
+          properties.map((pr) => (
+            <Link
+              key={pr.id}
+              href={`${hotelHref("/calendar", hotel.slug)}&p=${pr.id}&m=${yy}-${String(mm).padStart(2, "0")}`}
+              className={`rounded-full px-3 py-1 text-sm ${
+                pr.id === activeProp.id
+                  ? "bg-brand text-brand-fg"
+                  : "border border-border text-fg-muted"
+              }`}
+            >
+              {pr.name}
+            </Link>
+          ))}
         <div className="ml-auto flex items-center gap-2 text-sm">
           <Link
             href={`${hotelHref("/calendar", hotel.slug)}&p=${activeProp.id}&m=${prevM}`}

@@ -601,6 +601,7 @@ export type Database = {
           deleted_at: string | null
           id: string
           is_active: boolean
+          multi_property: boolean
           name: string
           owner_id: string
           package_id: string | null
@@ -614,6 +615,7 @@ export type Database = {
           deleted_at?: string | null
           id?: string
           is_active?: boolean
+          multi_property?: boolean
           name: string
           owner_id: string
           package_id?: string | null
@@ -627,6 +629,7 @@ export type Database = {
           deleted_at?: string | null
           id?: string
           is_active?: boolean
+          multi_property?: boolean
           name?: string
           owner_id?: string
           package_id?: string | null

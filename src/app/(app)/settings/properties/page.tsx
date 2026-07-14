@@ -4,7 +4,7 @@ import { resolveAccess } from "@/lib/package/resolve-access";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader, Card, Button, EmptyState } from "@/components/ui";
 import { PropertyForm } from "./property-form";
-import { deleteProperty } from "./actions";
+import { deleteProperty, toggleMultiProperty } from "./actions";
 
 type Property = {
   id: string;
@@ -42,6 +42,49 @@ export default async function PropertiesPage({
     .order("created_at", { ascending: true });
   const properties = (data ?? []) as unknown as Property[];
 
+  const multi = hotel.multi_property;
+  const main = properties[0];
+
+  // ── โหมดสาขาเดียว: โชว์ตั้งค่าโรงแรม (สาขาหลัก) ตรงๆ + ปุ่มเปิดหลายสาขา ──
+  if (!multi) {
+    return (
+      <div className="mx-auto max-w-4xl p-4 sm:p-8">
+        <PageHeader
+          title="ตั้งค่าโรงแรม"
+          subtitle={hotel.name}
+        />
+        {main ? (
+          <Card>
+            {canEdit ? (
+              <PropertyForm hotelSlug={hotel.slug} property={main} />
+            ) : (
+              <p className="text-sm text-fg-muted">คุณไม่มีสิทธิ์แก้ไข</p>
+            )}
+          </Card>
+        ) : (
+          <EmptyState art="bed" title="กำลังเตรียมข้อมูลโรงแรม…" />
+        )}
+
+        {canEdit && (
+          <Card className="mt-6">
+            <h2 className="font-semibold text-fg">มีหลายสาขา?</h2>
+            <p className="mt-1 text-sm text-fg-muted">
+              ถ้าโรงแรมของคุณมีหลายสาขา/หลายที่ เปิดโหมดนี้เพื่อจัดการแต่ละสาขาแยกกัน
+            </p>
+            <form action={toggleMultiProperty} className="mt-3">
+              <input type="hidden" name="hotelSlug" value={hotel.slug} />
+              <input type="hidden" name="enable" value="true" />
+              <Button variant="secondary" type="submit">
+                เปิดโหมดหลายสาขา
+              </Button>
+            </form>
+          </Card>
+        )}
+      </div>
+    );
+  }
+
+  // ── โหมดหลายสาขา: ลิสต์ + เพิ่มสาขา ──
   const atLimit =
     access.maxProperties !== null && properties.length >= access.maxProperties;
 
@@ -53,14 +96,6 @@ export default async function PropertiesPage({
           access.maxProperties !== null ? `/${access.maxProperties}` : ""
         } สาขา`}
       />
-
-      {properties.length === 0 && (
-        <EmptyState
-          art="bed"
-          title="ยังไม่มีสาขา"
-          description="เพิ่มสาขาแรกด้านล่าง"
-        />
-      )}
 
       <ul className="space-y-3">
         {properties.map((p) => (
@@ -79,13 +114,15 @@ export default async function PropertiesPage({
                   {canEdit ? (
                     <>
                       <PropertyForm hotelSlug={hotel.slug} property={p} />
-                      <form action={deleteProperty} className="mt-3">
-                        <input type="hidden" name="hotelSlug" value={hotel.slug} />
-                        <input type="hidden" name="propertyId" value={p.id} />
-                        <Button variant="danger" size="sm">
-                          ปิดสาขานี้
-                        </Button>
-                      </form>
+                      {properties.length > 1 && (
+                        <form action={deleteProperty} className="mt-3">
+                          <input type="hidden" name="hotelSlug" value={hotel.slug} />
+                          <input type="hidden" name="propertyId" value={p.id} />
+                          <Button variant="danger" size="sm">
+                            ปิดสาขานี้
+                          </Button>
+                        </form>
+                      )}
                     </>
                   ) : (
                     <p className="text-sm text-fg-muted">คุณไม่มีสิทธิ์แก้ไขสาขา</p>
@@ -106,6 +143,17 @@ export default async function PropertiesPage({
             </p>
           ) : (
             <PropertyForm hotelSlug={hotel.slug} />
+          )}
+
+          {/* ปิดโหมดหลายสาขา (ได้เฉพาะเหลือสาขาเดียว) */}
+          {properties.length === 1 && (
+            <form action={toggleMultiProperty} className="mt-6">
+              <input type="hidden" name="hotelSlug" value={hotel.slug} />
+              <input type="hidden" name="enable" value="false" />
+              <Button variant="ghost" size="sm" type="submit">
+                ปิดโหมดหลายสาขา (กลับเป็นโรงแรมที่เดียว)
+              </Button>
+            </form>
           )}
         </div>
       )}

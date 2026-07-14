@@ -4,7 +4,7 @@ import { createMiddlewareClient } from "@/lib/supabase/middleware";
 // Next 16 middleware = proxy.ts export proxy() (ไม่ใช่ middleware.ts)
 
 // path สาธารณะ (ไม่ต้อง login)
-const PUBLIC_EXACT = new Set<string>(["/", "/login", "/no-access"]);
+const PUBLIC_EXACT = new Set<string>(["/", "/login", "/no-access", "/design"]);
 const PUBLIC_PREFIXES = [
   "/auth/", // OAuth callback / sign-out
   "/invite/", // รับคำเชิญ

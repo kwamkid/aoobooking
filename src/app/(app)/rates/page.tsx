@@ -80,21 +80,23 @@ export default async function RatesPage({
     <div className="mx-auto max-w-4xl p-4 sm:p-8">
       <PageHeader title="ราคา & แพ็กเกจราคา" subtitle={hotel.name} />
 
-      <div className="flex flex-wrap gap-2">
-        {properties.map((pr) => (
-          <Link
-            key={pr.id}
-            href={`${hotelHref("/rates", hotel.slug)}&p=${pr.id}`}
-            className={`rounded-full px-3 py-1 text-sm ${
-              pr.id === activeProp.id
-                ? "bg-brand text-brand-fg"
-                : "border border-border text-fg-muted"
-            }`}
-          >
-            {pr.name}
-          </Link>
-        ))}
-      </div>
+      {hotel.multi_property && (
+        <div className="flex flex-wrap gap-2">
+          {properties.map((pr) => (
+            <Link
+              key={pr.id}
+              href={`${hotelHref("/rates", hotel.slug)}&p=${pr.id}`}
+              className={`rounded-full px-3 py-1 text-sm ${
+                pr.id === activeProp.id
+                  ? "bg-brand text-brand-fg"
+                  : "border border-border text-fg-muted"
+              }`}
+            >
+              {pr.name}
+            </Link>
+          ))}
+        </div>
+      )}
 
       {roomTypes.length === 0 && (
         <p className="mt-6 text-sm text-fg-subtle">
