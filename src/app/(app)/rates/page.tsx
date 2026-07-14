@@ -3,6 +3,7 @@ import { requireHotelMember } from "@/lib/auth";
 import { can } from "@/lib/permission";
 import { hotelHref } from "@/lib/hotel/href";
 import { createClient } from "@/lib/supabase/server";
+import { PageHeader, Card, EmptyState } from "@/components/ui";
 import { RatePlanForm, BulkPriceForm } from "./forms";
 
 type Prop = { id: string; name: string };
@@ -35,14 +36,23 @@ export default async function RatesPage({
 
   if (properties.length === 0) {
     return (
-      <div className="mx-auto max-w-4xl p-8">
-        <h1 className="text-2xl font-bold">ราคา</h1>
-        <p className="mt-4 text-neutral-500">
-          ยังไม่มีสาขา —{" "}
-          <Link href={hotelHref("/settings/properties", hotel.slug)} className="underline">
-            เพิ่มสาขาก่อน
-          </Link>
-        </p>
+      <div className="mx-auto max-w-4xl p-4 sm:p-8">
+        <PageHeader title="ราคา" subtitle={hotel.name} />
+        <EmptyState
+          art="receipt"
+          title="ยังไม่มีสาขา"
+          description={
+            <>
+              เพิ่มสาขาก่อนจึงจะตั้งราคาได้{" "}
+              <Link
+                href={hotelHref("/settings/properties", hotel.slug)}
+                className="text-brand underline"
+              >
+                เพิ่มสาขา
+              </Link>
+            </>
+          }
+        />
       </div>
     );
   }
@@ -67,18 +77,18 @@ export default async function RatesPage({
   const ratePlans = (rpData ?? []) as unknown as RatePlan[];
 
   return (
-    <div className="mx-auto max-w-4xl p-8">
-      <h1 className="text-2xl font-bold">ราคา &amp; แพ็กเกจราคา</h1>
+    <div className="mx-auto max-w-4xl p-4 sm:p-8">
+      <PageHeader title="ราคา & แพ็กเกจราคา" subtitle={hotel.name} />
 
-      <div className="mt-3 flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {properties.map((pr) => (
           <Link
             key={pr.id}
             href={`${hotelHref("/rates", hotel.slug)}&p=${pr.id}`}
             className={`rounded-full px-3 py-1 text-sm ${
               pr.id === activeProp.id
-                ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
-                : "border border-neutral-300 dark:border-neutral-700"
+                ? "bg-brand text-brand-fg"
+                : "border border-border text-fg-muted"
             }`}
           >
             {pr.name}
@@ -87,9 +97,9 @@ export default async function RatesPage({
       </div>
 
       {roomTypes.length === 0 && (
-        <p className="mt-6 text-sm text-neutral-400">
+        <p className="mt-6 text-sm text-fg-subtle">
           ยังไม่มีประเภทห้อง —{" "}
-          <Link href={hotelHref("/rooms", hotel.slug)} className="underline">
+          <Link href={hotelHref("/rooms", hotel.slug)} className="text-brand underline">
             เพิ่มห้องก่อน
           </Link>
         </p>
@@ -97,25 +107,24 @@ export default async function RatesPage({
 
       {/* rate plans */}
       <section className="mt-8">
-        <h2 className="mb-3 text-lg font-semibold">Rate Plans</h2>
+        <h2 className="mb-3 text-lg font-semibold text-fg">Rate Plans</h2>
         <div className="space-y-2">
           {ratePlans.map((rp) => (
-            <div
-              key={rp.id}
-              className="rounded-lg border border-neutral-200 p-3 text-sm dark:border-neutral-800"
-            >
-              <span className="font-medium">{rp.name}</span>
-              {rp.include_breakfast && (
-                <span className="ml-2 text-xs text-green-600">รวมอาหารเช้า</span>
-              )}
-              <span className="ml-2 text-xs text-neutral-500">
-                มัดจำ: {depositLabel(rp.deposit_policy)} · ยกเลิก:{" "}
-                {cancelLabel(rp.cancellation_policy)}
-              </span>
-            </div>
+            <Card key={rp.id} className="text-sm" pad={false}>
+              <div className="p-3">
+                <span className="font-medium text-fg">{rp.name}</span>
+                {rp.include_breakfast && (
+                  <span className="ml-2 text-xs text-success">รวมอาหารเช้า</span>
+                )}
+                <span className="ml-2 text-xs text-fg-muted">
+                  มัดจำ: {depositLabel(rp.deposit_policy)} · ยกเลิก:{" "}
+                  {cancelLabel(rp.cancellation_policy)}
+                </span>
+              </div>
+            </Card>
           ))}
           {ratePlans.length === 0 && (
-            <p className="text-sm text-neutral-400">ยังไม่มี rate plan</p>
+            <p className="text-sm text-fg-subtle">ยังไม่มี rate plan</p>
           )}
         </div>
 
@@ -128,8 +137,8 @@ export default async function RatesPage({
 
       {/* bulk price setter */}
       {canEdit && ratePlans.length > 0 && roomTypes.length > 0 && (
-        <section className="mt-8 border-t border-neutral-200 pt-6 dark:border-neutral-800">
-          <h2 className="mb-3 text-lg font-semibold">ตั้งราคาช่วงวัน (season)</h2>
+        <section className="mt-8 border-t border-border pt-6">
+          <h2 className="mb-3 text-lg font-semibold text-fg">ตั้งราคาช่วงวัน (season)</h2>
           <BulkPriceForm
             hotelSlug={hotel.slug}
             ratePlans={ratePlans.map((r) => ({ id: r.id, name: r.name }))}

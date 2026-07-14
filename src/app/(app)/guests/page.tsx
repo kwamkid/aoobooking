@@ -1,7 +1,18 @@
-import Link from "next/link";
 import { requireHotelMember } from "@/lib/auth";
 import { hotelHref } from "@/lib/hotel/href";
 import { createClient } from "@/lib/supabase/server";
+import {
+  PageHeader,
+  SearchBox,
+  EmptyState,
+  ButtonLink,
+  Table,
+  THead,
+  TBody,
+  TR,
+  TH,
+  TD,
+} from "@/components/ui";
 
 type GuestSafe = {
   id: string;
@@ -38,63 +49,66 @@ export default async function GuestsPage({
   const guests = (data ?? []) as unknown as GuestSafe[];
 
   return (
-    <div className="mx-auto max-w-4xl p-8">
-      <h1 className="text-2xl font-bold">แขก</h1>
+    <div className="mx-auto max-w-4xl p-4 sm:p-8">
+      <PageHeader title="แขก" subtitle={hotel.name} />
 
-      <form className="mt-4" action={hotelHref("/guests", hotel.slug).split("?")[0]}>
+      <form className="mb-6" action={hotelHref("/guests", hotel.slug).split("?")[0]}>
         <input type="hidden" name="h" value={hotel.slug} />
-        <input
+        <SearchBox
           name="q"
           defaultValue={q ?? ""}
           placeholder="ค้นชื่อ / เบอร์ / อีเมล"
-          className="w-full max-w-sm rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+          className="max-w-sm"
         />
       </form>
 
       {guests.length === 0 ? (
-        <p className="mt-8 text-neutral-400">
-          {q ? "ไม่พบแขกที่ค้นหา" : "ยังไม่มีแขก (จะถูกสร้างเมื่อมีการจอง)"}
-        </p>
+        <EmptyState
+          art="guest"
+          title={q ? "ไม่พบแขกที่ค้นหา" : "ยังไม่มีแขก"}
+          description={q ? undefined : "แขกจะถูกสร้างเมื่อมีการจอง"}
+        />
       ) : (
-        <table className="mt-6 w-full text-sm">
-          <thead className="text-left text-neutral-500">
-            <tr className="border-b border-neutral-200 dark:border-neutral-800">
-              <th className="py-2">ชื่อ</th>
-              <th>ติดต่อ</th>
-              <th>สัญชาติ</th>
-              <th>PDPA</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table>
+          <THead>
+            <TR>
+              <TH>ชื่อ</TH>
+              <TH>ติดต่อ</TH>
+              <TH>สัญชาติ</TH>
+              <TH>PDPA</TH>
+              <TH></TH>
+            </TR>
+          </THead>
+          <TBody>
             {guests.map((g) => (
-              <tr key={g.id} className="border-b border-neutral-100 dark:border-neutral-900">
-                <td className="py-2 font-medium">{g.full_name}</td>
-                <td className="text-neutral-500">
+              <TR key={g.id}>
+                <TD className="font-medium">{g.full_name}</TD>
+                <TD className="text-fg-muted">
                   {g.phone ?? ""}
                   {g.phone && g.email ? " · " : ""}
                   {g.email ?? ""}
-                </td>
-                <td className="text-neutral-500">{g.nationality ?? "-"}</td>
-                <td>
+                </TD>
+                <TD className="text-fg-muted">{g.nationality ?? "-"}</TD>
+                <TD>
                   {g.pdpa_consent_at ? (
-                    <span className="text-xs text-green-600">✓ ยินยอม</span>
+                    <span className="text-xs text-success">✓ ยินยอม</span>
                   ) : (
-                    <span className="text-xs text-neutral-400">—</span>
+                    <span className="text-xs text-fg-subtle">—</span>
                   )}
-                </td>
-                <td className="text-right">
-                  <Link
+                </TD>
+                <TD className="text-right">
+                  <ButtonLink
                     href={hotelHref(`/guests/${g.id}`, hotel.slug)}
-                    className="text-xs underline"
+                    variant="ghost"
+                    size="sm"
                   >
                     รายละเอียด
-                  </Link>
-                </td>
-              </tr>
+                  </ButtonLink>
+                </TD>
+              </TR>
             ))}
-          </tbody>
-        </table>
+          </TBody>
+        </Table>
       )}
     </div>
   );

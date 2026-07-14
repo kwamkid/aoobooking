@@ -1,6 +1,7 @@
 import { requireHotelMember } from "@/lib/auth";
 import { can } from "@/lib/permission";
 import { createClient } from "@/lib/supabase/server";
+import { PageHeader, SearchBox, EmptyState } from "@/components/ui";
 
 type AuditRow = {
   id: string;
@@ -27,9 +28,9 @@ export default async function AuditPage({
 
   if (!canManage) {
     return (
-      <div className="mx-auto max-w-4xl p-8">
-        <h1 className="text-2xl font-bold">บันทึกกิจกรรม</h1>
-        <p className="mt-4 text-neutral-500">เฉพาะเจ้าของ/ผู้ดูแลเท่านั้นที่ดูบันทึกได้</p>
+      <div className="mx-auto max-w-4xl p-4 sm:p-8">
+        <PageHeader title="บันทึกกิจกรรม" subtitle={hotel.name} />
+        <p className="mt-4 text-fg-muted">เฉพาะเจ้าของ/ผู้ดูแลเท่านั้นที่ดูบันทึกได้</p>
       </div>
     );
   }
@@ -49,50 +50,46 @@ export default async function AuditPage({
   const rows = (data ?? []) as unknown as AuditRow[];
 
   return (
-    <div className="mx-auto max-w-4xl p-8">
-      <h1 className="text-2xl font-bold">บันทึกกิจกรรม</h1>
-      <p className="mt-1 text-sm text-neutral-500">{hotel.name} · 100 รายการล่าสุด</p>
+    <div className="mx-auto max-w-4xl p-4 sm:p-8">
+      <PageHeader title="บันทึกกิจกรรม" subtitle={`${hotel.name} · 100 รายการล่าสุด`} />
 
-      <form className="mt-4">
+      <form className="mb-6">
         <input type="hidden" name="h" value={hotel.slug} />
-        <input
+        <SearchBox
           name="action"
           defaultValue={action ?? ""}
           placeholder="กรอง action เช่น booking.created"
-          className="w-full max-w-sm rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+          className="max-w-sm"
         />
       </form>
 
       {rows.length === 0 ? (
-        <p className="mt-8 text-neutral-400">ยังไม่มีบันทึก</p>
+        <EmptyState art="search" title="ยังไม่มีบันทึก" />
       ) : (
-        <ul className="mt-6 space-y-2">
+        <ul className="space-y-2">
           {rows.map((r) => (
-            <li
-              key={r.id}
-              className="rounded-lg border border-neutral-200 p-3 text-sm dark:border-neutral-800"
-            >
+            <li key={r.id} className="card p-3 text-sm">
               <div className="flex items-baseline justify-between">
                 <span className="font-mono text-xs font-medium">{r.action}</span>
-                <span className="text-xs text-neutral-400">
+                <span className="text-xs text-fg-subtle">
                   {new Date(r.created_at).toLocaleString("th-TH")}
                 </span>
               </div>
-              <div className="mt-0.5 text-xs text-neutral-500">
+              <div className="mt-0.5 text-xs text-fg-muted">
                 {r.profiles?.full_name ?? r.profiles?.email ?? (r.actor_id ? "ผู้ใช้" : "ระบบ")}
                 {r.entity_type ? ` · ${r.entity_type}` : ""}
                 {r.note ? ` · ${r.note}` : ""}
               </div>
               {(r.old_data != null || r.new_data != null) && (
                 <details className="mt-1">
-                  <summary className="cursor-pointer text-xs text-neutral-400">
+                  <summary className="cursor-pointer text-xs text-fg-subtle">
                     ดู diff
                   </summary>
                   <div className="mt-1 grid grid-cols-2 gap-2 text-xs">
-                    <pre className="overflow-x-auto rounded bg-red-50 p-2 dark:bg-red-950/20">
+                    <pre className="overflow-x-auto rounded bg-danger-soft p-2 text-danger">
                       {r.old_data ? JSON.stringify(r.old_data, null, 2) : "—"}
                     </pre>
-                    <pre className="overflow-x-auto rounded bg-green-50 p-2 dark:bg-green-950/20">
+                    <pre className="overflow-x-auto rounded bg-success-soft p-2 text-success">
                       {r.new_data ? JSON.stringify(r.new_data, null, 2) : "—"}
                     </pre>
                   </div>

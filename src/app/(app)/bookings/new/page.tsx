@@ -39,11 +39,11 @@ export default async function NewBookingPage({
 
   if (properties.length === 0) {
     return (
-      <div className="mx-auto max-w-2xl p-8">
-        <h1 className="text-2xl font-bold">จองใหม่</h1>
-        <p className="mt-4 text-neutral-500">
+      <div className="mx-auto max-w-2xl p-4 sm:p-8">
+        <h1 className="text-2xl font-bold text-fg">จองใหม่</h1>
+        <p className="mt-4 text-fg-muted">
           ต้องตั้งค่าสาขา/ห้อง/ราคาก่อน —{" "}
-          <Link href={hotelHref("/settings/properties", hotel.slug)} className="underline">
+          <Link href={hotelHref("/settings/properties", hotel.slug)} className="text-brand underline">
             เริ่มที่นี่
           </Link>
         </p>
@@ -52,15 +52,15 @@ export default async function NewBookingPage({
   }
 
   return (
-    <div className="mx-auto max-w-2xl p-8">
+    <div className="mx-auto max-w-2xl p-4 sm:p-8">
       <div className="mb-4 flex items-center gap-3">
         <Link
           href={hotelHref("/bookings", hotel.slug)}
-          className="text-sm text-neutral-500 underline"
+          className="text-sm text-fg-muted underline"
         >
           ← การจอง
         </Link>
-        <h1 className="text-2xl font-bold">จองใหม่</h1>
+        <h1 className="text-2xl font-bold text-fg">จองใหม่</h1>
       </div>
 
       <BookingWizard

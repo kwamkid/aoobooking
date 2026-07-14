@@ -3,6 +3,7 @@ import { requireHotelMember } from "@/lib/auth";
 import { can } from "@/lib/permission";
 import { hotelHref } from "@/lib/hotel/href";
 import { createClient } from "@/lib/supabase/server";
+import { PageHeader, Card, EmptyState } from "@/components/ui";
 import { RoomTypeForm, RoomForm } from "./forms";
 import { deleteRoom } from "./actions";
 
@@ -37,14 +38,23 @@ export default async function RoomsPage({
 
   if (properties.length === 0) {
     return (
-      <div className="mx-auto max-w-4xl p-8">
-        <h1 className="text-2xl font-bold">ห้องพัก</h1>
-        <p className="mt-4 text-neutral-500">
-          ยังไม่มีสาขา —{" "}
-          <Link href={hotelHref("/settings/properties", hotel.slug)} className="underline">
-            เพิ่มสาขาก่อน
-          </Link>
-        </p>
+      <div className="mx-auto max-w-4xl p-4 sm:p-8">
+        <PageHeader title="ห้องพัก" subtitle={hotel.name} />
+        <EmptyState
+          art="bed"
+          title="ยังไม่มีสาขา"
+          description={
+            <>
+              เพิ่มสาขาก่อนจึงจะจัดการห้องพักได้{" "}
+              <Link
+                href={hotelHref("/settings/properties", hotel.slug)}
+                className="text-brand underline"
+              >
+                เพิ่มสาขา
+              </Link>
+            </>
+          }
+        />
       </div>
     );
   }
@@ -69,19 +79,19 @@ export default async function RoomsPage({
   const rooms = (roomData ?? []) as unknown as Room[];
 
   return (
-    <div className="mx-auto max-w-4xl p-8">
-      <h1 className="text-2xl font-bold">ห้องพัก</h1>
+    <div className="mx-auto max-w-4xl p-4 sm:p-8">
+      <PageHeader title="ห้องพัก" subtitle={hotel.name} />
 
       {/* property switcher */}
-      <div className="mt-3 flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {properties.map((pr) => (
           <Link
             key={pr.id}
             href={`${hotelHref("/rooms", hotel.slug)}&p=${pr.id}`}
             className={`rounded-full px-3 py-1 text-sm ${
               pr.id === activeProp.id
-                ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
-                : "border border-neutral-300 dark:border-neutral-700"
+                ? "bg-brand text-brand-fg"
+                : "border border-border text-fg-muted"
             }`}
           >
             {pr.name}
@@ -91,34 +101,31 @@ export default async function RoomsPage({
 
       {/* room types */}
       <section className="mt-8">
-        <h2 className="mb-3 text-lg font-semibold">ประเภทห้อง</h2>
+        <h2 className="mb-3 text-lg font-semibold text-fg">ประเภทห้อง</h2>
         {roomTypes.length === 0 && (
-          <p className="text-sm text-neutral-400">ยังไม่มีประเภทห้อง</p>
+          <p className="text-sm text-fg-subtle">ยังไม่มีประเภทห้อง</p>
         )}
         <div className="space-y-4">
           {roomTypes.map((rt) => {
             const typeRooms = rooms.filter((r) => r.room_type_id === rt.id);
             return (
-              <div
-                key={rt.id}
-                className="rounded-lg border border-neutral-200 p-4 dark:border-neutral-800"
-              >
+              <Card key={rt.id}>
                 <div className="flex items-baseline justify-between">
                   <div>
-                    <span className="font-medium">{rt.name}</span>
-                    <span className="ml-2 text-xs text-neutral-500">
+                    <span className="font-medium text-fg">{rt.name}</span>
+                    <span className="ml-2 text-xs text-fg-muted">
                       พัก {rt.base_occupancy}–{rt.max_occupancy} คน · ผู้ใหญ่เพิ่ม{" "}
                       {(rt.extra_adult_satang / 100).toLocaleString()}฿
                     </span>
                   </div>
-                  <span className="text-sm text-neutral-400">{typeRooms.length} ห้อง</span>
+                  <span className="text-sm text-fg-subtle">{typeRooms.length} ห้อง</span>
                 </div>
 
                 <div className="mt-2 flex flex-wrap gap-2">
                   {typeRooms.map((r) => (
                     <span
                       key={r.id}
-                      className="inline-flex items-center gap-1 rounded border border-neutral-200 px-2 py-0.5 text-sm dark:border-neutral-700"
+                      className="inline-flex items-center gap-1 rounded border border-border px-2 py-0.5 text-sm text-fg"
                     >
                       {r.room_number}
                       {r.floor ? `·ชั้น${r.floor}` : ""}
@@ -126,7 +133,7 @@ export default async function RoomsPage({
                         <form action={deleteRoom} className="inline">
                           <input type="hidden" name="hotelSlug" value={hotel.slug} />
                           <input type="hidden" name="roomId" value={r.id} />
-                          <button className="ml-1 text-red-500" title="ลบห้อง">
+                          <button className="ml-1 text-danger" title="ลบห้อง">
                             ×
                           </button>
                         </form>
@@ -144,7 +151,7 @@ export default async function RoomsPage({
                     />
                   </div>
                 )}
-              </div>
+              </Card>
             );
           })}
         </div>
@@ -152,8 +159,8 @@ export default async function RoomsPage({
 
       {/* new room type */}
       {canEdit && (
-        <section className="mt-8 border-t border-neutral-200 pt-6 dark:border-neutral-800">
-          <h2 className="mb-3 text-lg font-semibold">เพิ่มประเภทห้อง</h2>
+        <section className="mt-8 border-t border-border pt-6">
+          <h2 className="mb-3 text-lg font-semibold text-fg">เพิ่มประเภทห้อง</h2>
           <RoomTypeForm hotelSlug={hotel.slug} propertyId={activeProp.id} />
         </section>
       )}

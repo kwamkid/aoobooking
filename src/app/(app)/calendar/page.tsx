@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireHotelMember } from "@/lib/auth";
 import { hotelHref } from "@/lib/hotel/href";
 import { createClient } from "@/lib/supabase/server";
+import { PageHeader, EmptyState } from "@/components/ui";
 
 type Prop = { id: string; name: string };
 type RoomType = { id: string; name: string };
@@ -15,12 +16,11 @@ type InvRow = {
 
 // สีตามระดับความว่าง (available/total)
 function cellClass(avail: number, total: number): string {
-  if (total === 0) return "bg-neutral-100 text-neutral-400 dark:bg-neutral-800";
-  if (avail <= 0) return "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300";
+  if (total === 0) return "bg-bg-subtle text-fg-subtle";
+  if (avail <= 0) return "bg-danger-soft text-danger";
   const ratio = avail / total;
-  if (ratio <= 0.25)
-    return "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300";
-  return "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-300";
+  if (ratio <= 0.25) return "bg-warning-soft text-warning";
+  return "bg-success-soft text-success";
 }
 
 export default async function CalendarPage({
@@ -42,14 +42,22 @@ export default async function CalendarPage({
 
   if (properties.length === 0) {
     return (
-      <div className="mx-auto max-w-5xl p-8">
-        <h1 className="text-2xl font-bold">ปฏิทินห้องว่าง</h1>
-        <p className="mt-4 text-neutral-500">
-          ยังไม่มีสาขา —{" "}
-          <Link href={hotelHref("/settings/properties", hotel.slug)} className="underline">
-            เพิ่มสาขาก่อน
-          </Link>
-        </p>
+      <div className="mx-auto max-w-5xl p-4 sm:p-8">
+        <PageHeader title="ปฏิทินห้องว่าง" />
+        <EmptyState
+          art="calendar"
+          title="ยังไม่มีสาขา"
+          description={
+            <>
+              <Link
+                href={hotelHref("/settings/properties", hotel.slug)}
+                className="text-brand underline"
+              >
+                เพิ่มสาขาก่อน
+              </Link>
+            </>
+          }
+        />
       </div>
     );
   }
@@ -98,19 +106,19 @@ export default async function CalendarPage({
   });
 
   return (
-    <div className="mx-auto max-w-6xl p-8">
-      <h1 className="text-2xl font-bold">ปฏิทินห้องว่าง</h1>
+    <div className="mx-auto max-w-6xl p-4 sm:p-8">
+      <PageHeader title="ปฏิทินห้องว่าง" />
 
       {/* property switcher + month nav */}
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {properties.map((pr) => (
           <Link
             key={pr.id}
             href={`${hotelHref("/calendar", hotel.slug)}&p=${pr.id}&m=${yy}-${String(mm).padStart(2, "0")}`}
             className={`rounded-full px-3 py-1 text-sm ${
               pr.id === activeProp.id
-                ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
-                : "border border-neutral-300 dark:border-neutral-700"
+                ? "bg-brand text-brand-fg"
+                : "border border-border text-fg-muted"
             }`}
           >
             {pr.name}
@@ -119,14 +127,14 @@ export default async function CalendarPage({
         <div className="ml-auto flex items-center gap-2 text-sm">
           <Link
             href={`${hotelHref("/calendar", hotel.slug)}&p=${activeProp.id}&m=${prevM}`}
-            className="rounded border border-neutral-300 px-2 py-1 dark:border-neutral-700"
+            className="rounded border border-border px-2 py-1 text-fg-muted"
           >
             ←
           </Link>
-          <span className="min-w-32 text-center font-medium">{monthLabel}</span>
+          <span className="min-w-32 text-center font-medium text-fg">{monthLabel}</span>
           <Link
             href={`${hotelHref("/calendar", hotel.slug)}&p=${activeProp.id}&m=${nextM}`}
-            className="rounded border border-neutral-300 px-2 py-1 dark:border-neutral-700"
+            className="rounded border border-border px-2 py-1 text-fg-muted"
           >
             →
           </Link>
@@ -134,9 +142,9 @@ export default async function CalendarPage({
       </div>
 
       {roomTypes.length === 0 ? (
-        <p className="mt-6 text-sm text-neutral-400">
+        <p className="mt-6 text-sm text-fg-muted">
           ยังไม่มีประเภทห้อง —{" "}
-          <Link href={hotelHref("/rooms", hotel.slug)} className="underline">
+          <Link href={hotelHref("/rooms", hotel.slug)} className="text-brand underline">
             เพิ่มห้องก่อน
           </Link>
         </p>
@@ -145,11 +153,11 @@ export default async function CalendarPage({
           <table className="border-collapse text-xs">
             <thead>
               <tr>
-                <th className="sticky left-0 z-10 bg-white p-2 text-left dark:bg-neutral-950">
+                <th className="sticky left-0 z-10 bg-bg p-2 text-left text-fg">
                   ประเภทห้อง
                 </th>
                 {days.map((d) => (
-                  <th key={d} className="w-9 p-1 text-center font-normal text-neutral-400">
+                  <th key={d} className="w-9 p-1 text-center font-normal text-fg-subtle">
                     {d}
                   </th>
                 ))}
@@ -158,7 +166,7 @@ export default async function CalendarPage({
             <tbody>
               {roomTypes.map((rt) => (
                 <tr key={rt.id}>
-                  <td className="sticky left-0 z-10 whitespace-nowrap bg-white p-2 font-medium dark:bg-neutral-950">
+                  <td className="sticky left-0 z-10 whitespace-nowrap bg-bg p-2 font-medium text-fg">
                     {rt.name}
                   </td>
                   {days.map((d) => {
@@ -169,7 +177,7 @@ export default async function CalendarPage({
                     return (
                       <td
                         key={d}
-                        className={`border border-white text-center dark:border-neutral-950 ${cellClass(avail, total)}`}
+                        className={`border border-bg text-center ${cellClass(avail, total)}`}
                         title={
                           row
                             ? `${date}: ว่าง ${avail}/${total} (จอง ${row.booked}, ปิด ${row.blocked})`
@@ -185,18 +193,16 @@ export default async function CalendarPage({
             </tbody>
           </table>
 
-          <div className="mt-3 flex gap-3 text-xs text-neutral-500">
+          <div className="mt-3 flex gap-3 text-xs text-fg-muted">
             <span className="flex items-center gap-1">
-              <span className="inline-block h-3 w-3 rounded bg-green-50 dark:bg-green-950/30" />{" "}
-              ว่าง
+              <span className="inline-block h-3 w-3 rounded bg-success-soft" /> ว่าง
             </span>
             <span className="flex items-center gap-1">
-              <span className="inline-block h-3 w-3 rounded bg-amber-100 dark:bg-amber-950/40" />{" "}
-              ใกล้เต็ม (≤25%)
+              <span className="inline-block h-3 w-3 rounded bg-warning-soft" /> ใกล้เต็ม
+              (≤25%)
             </span>
             <span className="flex items-center gap-1">
-              <span className="inline-block h-3 w-3 rounded bg-red-100 dark:bg-red-950/40" />{" "}
-              เต็ม
+              <span className="inline-block h-3 w-3 rounded bg-danger-soft" /> เต็ม
             </span>
           </div>
         </div>

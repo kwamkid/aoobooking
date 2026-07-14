@@ -1,5 +1,6 @@
 import { requireHotelMember } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { PageHeader } from "@/components/ui";
 import { ActionButton } from "./action-button";
 import { checkInBooking, checkOutBooking } from "./actions";
 
@@ -64,11 +65,11 @@ export default async function FrontDeskPage({
   const inhouseRows = (inhouse ?? []) as unknown as Row[];
 
   return (
-    <div className="mx-auto max-w-4xl p-8">
-      <h1 className="text-2xl font-bold">หน้าเคาน์เตอร์</h1>
-      <p className="mt-1 text-neutral-500">
-        {hotel.name} · {new Date(today).toLocaleDateString("th-TH")}
-      </p>
+    <div className="mx-auto max-w-4xl p-4 sm:p-8">
+      <PageHeader
+        title="หน้าเคาน์เตอร์"
+        subtitle={`${hotel.name} · ${new Date(today).toLocaleDateString("th-TH")}`}
+      />
 
       {/* เข้าวันนี้ */}
       <Section title={`เข้าวันนี้ (${arrivalRows.length})`}>
@@ -128,7 +129,7 @@ export default async function FrontDeskPage({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mt-8">
-      <h2 className="mb-2 text-lg font-semibold">{title}</h2>
+      <h2 className="mb-2 text-lg font-semibold text-fg">{title}</h2>
       <div className="space-y-2">{children}</div>
     </section>
   );
@@ -144,15 +145,15 @@ function RowItem({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between rounded-lg border border-neutral-200 p-3 text-sm dark:border-neutral-800">
+    <div className="flex items-center justify-between rounded-lg border border-border p-3 text-sm">
       <div>
         <span className="font-mono">{b.code}</span>
         <span className="ml-2 font-medium">{b.guests?.full_name ?? "-"}</span>
-        <span className="ml-2 text-xs text-neutral-500">
+        <span className="ml-2 text-xs text-fg-muted">
           {b.check_in} → {b.check_out}
         </span>
         {balance != null && balance > 0 && (
-          <span className="ml-2 text-xs font-medium text-red-600">
+          <span className="ml-2 text-xs font-medium text-danger">
             ค้าง {(balance / 100).toLocaleString()}฿
           </span>
         )}
@@ -163,5 +164,5 @@ function RowItem({
 }
 
 function Empty({ children }: { children: React.ReactNode }) {
-  return <p className="text-sm text-neutral-400">{children}</p>;
+  return <p className="text-sm text-fg-subtle">{children}</p>;
 }

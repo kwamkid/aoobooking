@@ -1,6 +1,18 @@
 import { requireHotelMember } from "@/lib/auth";
 import { can } from "@/lib/permission";
 import { createClient } from "@/lib/supabase/server";
+import {
+  PageHeader,
+  Card,
+  Field,
+  Input,
+  Select,
+  Button,
+  Table,
+  TBody,
+  TR,
+  TD,
+} from "@/components/ui";
 
 type Prop = { id: string; name: string };
 
@@ -41,9 +53,9 @@ export default async function ReportsPage({
 
   if (!canView) {
     return (
-      <div className="mx-auto max-w-4xl p-8">
-        <h1 className="text-2xl font-bold">รายงาน</h1>
-        <p className="mt-4 text-neutral-500">คุณไม่มีสิทธิ์ดูรายงาน</p>
+      <div className="mx-auto max-w-4xl p-4 sm:p-8">
+        <PageHeader title="รายงาน" subtitle={hotel.name} />
+        <p className="mt-4 text-fg-muted">คุณไม่มีสิทธิ์ดูรายงาน</p>
       </div>
     );
   }
@@ -131,56 +143,37 @@ export default async function ReportsPage({
   }
 
   return (
-    <div className="mx-auto max-w-4xl p-8">
-      <h1 className="text-2xl font-bold">รายงาน</h1>
+    <div className="mx-auto max-w-4xl p-4 sm:p-8">
+      <PageHeader title="รายงาน" subtitle={hotel.name} />
 
-      <form className="mt-4 flex flex-wrap items-end gap-3 text-sm">
+      <form className="mb-6 flex flex-wrap items-end gap-3">
         <input type="hidden" name="h" value={hotel.slug} />
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-neutral-500">ตั้งแต่</span>
-          <input
-            type="date"
-            name="from"
-            defaultValue={defFrom}
-            className="rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
-          />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-neutral-500">ถึง</span>
-          <input
-            type="date"
-            name="to"
-            defaultValue={defTo}
-            className="rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
-          />
-        </label>
+        <Field label="ตั้งแต่">
+          <Input type="date" name="from" defaultValue={defFrom} />
+        </Field>
+        <Field label="ถึง">
+          <Input type="date" name="to" defaultValue={defTo} />
+        </Field>
         {properties.length > 1 && (
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-neutral-500">สาขา</span>
-            <select
-              name="p"
-              defaultValue={p ?? ""}
-              className="rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
-            >
+          <Field label="สาขา">
+            <Select name="p" defaultValue={p ?? ""}>
               <option value="">ทุกสาขา</option>
               {properties.map((pr) => (
                 <option key={pr.id} value={pr.id}>
                   {pr.name}
                 </option>
               ))}
-            </select>
-          </label>
+            </Select>
+          </Field>
         )}
-        <button className="rounded-md bg-neutral-900 px-4 py-2 font-medium text-white dark:bg-white dark:text-neutral-900">
-          ดูรายงาน
-        </button>
+        <Button type="submit">ดูรายงาน</Button>
       </form>
 
       {/* สรุปยอด */}
-      <div className="mt-6 grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Stat label="รายได้ (charge folio)" value={baht(revenueTotal)} />
         <Stat label="รับเงินจริง (confirmed)" value={baht(paidTotal)} />
-        <Stat label="คืนเงิน (refund)" value={baht(refundTotal)} tone="red" />
+        <Stat label="คืนเงิน (refund)" value={baht(refundTotal)} tone="danger" />
       </div>
 
       {/* รายได้แยกหมวด */}
@@ -200,7 +193,7 @@ export default async function ReportsPage({
         empty="ยังไม่มีการรับเงินในช่วงนี้"
       />
 
-      <p className="mt-6 text-xs text-neutral-400">
+      <p className="mt-6 text-xs text-fg-subtle">
         ยอดรับเงิน/refund คิดจาก amount_base_satang (สกุลบัญชี) · ADR/RevPAR อยู่ใน night audit (Phase 2)
       </p>
     </div>
@@ -214,17 +207,15 @@ function Stat({
 }: {
   label: string;
   value: string;
-  tone?: "red";
+  tone?: "danger";
 }) {
   return (
-    <div className="rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
-      <div className="text-xs text-neutral-500">{label}</div>
-      <div
-        className={`mt-1 text-xl font-bold ${tone === "red" ? "text-red-600" : ""}`}
-      >
+    <Card>
+      <div className="text-xs text-fg-muted">{label}</div>
+      <div className={`mt-1 text-xl font-bold ${tone === "danger" ? "text-danger" : "text-fg"}`}>
         {value}฿
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -239,20 +230,20 @@ function ReportTable({
 }) {
   return (
     <section className="mt-6">
-      <h2 className="mb-2 text-lg font-semibold">{title}</h2>
+      <h2 className="mb-2 text-lg font-semibold text-fg">{title}</h2>
       {rows.length === 0 ? (
-        <p className="text-sm text-neutral-400">{empty}</p>
+        <p className="text-sm text-fg-subtle">{empty}</p>
       ) : (
-        <table className="w-full max-w-md text-sm">
-          <tbody>
+        <Table className="max-w-md">
+          <TBody>
             {rows.map(([k, v]) => (
-              <tr key={k} className="border-b border-neutral-100 dark:border-neutral-900">
-                <td className="py-1.5">{k}</td>
-                <td className="py-1.5 text-right font-medium">{v}฿</td>
-              </tr>
+              <TR key={k}>
+                <TD>{k}</TD>
+                <TD className="text-right font-medium">{v}฿</TD>
+              </TR>
             ))}
-          </tbody>
-        </table>
+          </TBody>
+        </Table>
       )}
     </section>
   );

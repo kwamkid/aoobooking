@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Button } from "@/components/ui";
 
 // ปุ่มเรียก server action + โชว์ error จาก RPC (เช่น "ยังมียอดค้าง" ตอน check-out)
 export function ActionButton({
@@ -35,19 +36,16 @@ export function ActionButton({
 
   return (
     <div className="text-right">
-      <button
+      <Button
+        variant={variant === "disabled-hint" ? "secondary" : "primary"}
+        size="sm"
         onClick={onClick}
         disabled={pending}
-        className={`rounded-md px-3 py-1.5 text-sm font-medium disabled:opacity-40 ${
-          variant === "disabled-hint"
-            ? "border border-amber-400 text-amber-700"
-            : "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
-        }`}
         title={variant === "disabled-hint" ? "มียอดค้าง — กดแล้วระบบจะเตือน" : undefined}
       >
         {pending ? "…" : label}
-      </button>
-      {error && <p className="mt-1 max-w-48 text-xs text-red-600">{error}</p>}
+      </Button>
+      {error && <p className="mt-1 max-w-48 text-xs text-danger">{error}</p>}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Field, Input, Button } from "@/components/ui";
 import { createProperty, updateProperty } from "./actions";
 
 type Property = {
@@ -16,10 +17,6 @@ type Property = {
   service_charge_percent: number;
   tax_inclusive: boolean;
 };
-
-const field =
-  "w-full rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900";
-const label = "mb-1 block text-xs font-medium text-neutral-500";
 
 export function PropertyForm({
   hotelSlug,
@@ -42,82 +39,60 @@ export function PropertyForm({
   }
 
   return (
-    <form action={onSubmit} className="grid grid-cols-2 gap-3">
+    <form action={onSubmit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       <input type="hidden" name="hotelSlug" value={hotelSlug} />
       {isEdit && <input type="hidden" name="propertyId" value={property.id} />}
 
-      <div className="col-span-2">
-        <label className={label}>ชื่อสาขา *</label>
-        <input name="name" required defaultValue={property?.name} className={field} />
-      </div>
+      <Field label="ชื่อสาขา *" className="sm:col-span-2">
+        <Input name="name" required defaultValue={property?.name} />
+      </Field>
 
       {!isEdit && (
-        <div className="col-span-2">
-          <label className={label}>slug (URL — เว้นว่างให้ระบบสร้างจากชื่อ)</label>
-          <input name="slug" placeholder="phuket" className={field} />
-        </div>
+        <Field
+          label="slug (URL — เว้นว่างให้ระบบสร้างจากชื่อ)"
+          className="sm:col-span-2"
+        >
+          <Input name="slug" placeholder="phuket" />
+        </Field>
       )}
 
-      <div className="col-span-2">
-        <label className={label}>ที่อยู่</label>
-        <input name="address" defaultValue={property?.address ?? ""} className={field} />
-      </div>
+      <Field label="ที่อยู่" className="sm:col-span-2">
+        <Input name="address" defaultValue={property?.address ?? ""} />
+      </Field>
 
-      <div>
-        <label className={label}>โทรศัพท์</label>
-        <input name="phone" defaultValue={property?.phone ?? ""} className={field} />
-      </div>
-      <div>
-        <label className={label}>Timezone</label>
-        <input
-          name="timezone"
-          defaultValue={property?.timezone ?? "Asia/Bangkok"}
-          className={field}
-        />
-      </div>
+      <Field label="โทรศัพท์">
+        <Input name="phone" defaultValue={property?.phone ?? ""} />
+      </Field>
+      <Field label="Timezone">
+        <Input name="timezone" defaultValue={property?.timezone ?? "Asia/Bangkok"} />
+      </Field>
 
-      <div>
-        <label className={label}>เวลาเช็คอิน</label>
-        <input
-          type="time"
-          name="check_in_time"
-          defaultValue={property?.check_in_time ?? "14:00"}
-          className={field}
-        />
-      </div>
-      <div>
-        <label className={label}>เวลาเช็คเอาท์</label>
-        <input
-          type="time"
-          name="check_out_time"
-          defaultValue={property?.check_out_time ?? "12:00"}
-          className={field}
-        />
-      </div>
+      <Field label="เวลาเช็คอิน">
+        <Input type="time" name="check_in_time" defaultValue={property?.check_in_time ?? "14:00"} />
+      </Field>
+      <Field label="เวลาเช็คเอาท์">
+        <Input type="time" name="check_out_time" defaultValue={property?.check_out_time ?? "12:00"} />
+      </Field>
 
-      <div>
-        <label className={label}>VAT %</label>
-        <input
+      <Field label="VAT %">
+        <Input
           type="number"
           step="0.01"
           name="vat_percent"
           defaultValue={property?.vat_percent ?? 7}
-          className={field}
         />
-      </div>
-      <div>
-        <label className={label}>Service Charge %</label>
-        <input
+      </Field>
+      <Field label="Service Charge %">
+        <Input
           type="number"
           step="0.01"
           name="service_charge_percent"
           defaultValue={property?.service_charge_percent ?? 0}
-          className={field}
         />
-      </div>
+      </Field>
 
-      <div className="col-span-2 rounded-md bg-neutral-50 p-3 dark:bg-neutral-900/50">
-        <label className="flex items-center gap-2 text-sm">
+      <div className="rounded-(--radius) bg-bg-subtle p-3 sm:col-span-2">
+        <label className="flex items-center gap-2 text-sm text-fg">
           <input
             type="checkbox"
             name="tax_inclusive"
@@ -127,20 +102,16 @@ export function PropertyForm({
             ราคาที่ตั้ง <b>รวมภาษีแล้ว</b> (tax-inclusive)
           </span>
         </label>
-        <p className="mt-1 text-xs text-neutral-500">
-          ติ๊ก = ราคาห้องที่ใส่รวม VAT/SC แล้ว (ระบบแตกยอดภาษีย้อนกลับ) ·
-          ไม่ติ๊ก = บวกภาษีเพิ่มตอนคิดเงิน
+        <p className="mt-1 text-xs text-fg-muted">
+          ติ๊ก = ราคาห้องที่ใส่รวม VAT/SC แล้ว (ระบบแตกยอดภาษีย้อนกลับ) · ไม่ติ๊ก =
+          บวกภาษีเพิ่มตอนคิดเงิน
         </p>
       </div>
 
-      {error && (
-        <p className="col-span-2 text-sm text-red-600">{error}</p>
-      )}
+      {error && <p className="text-sm text-danger sm:col-span-2">{error}</p>}
 
-      <div className="col-span-2">
-        <button className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-neutral-900">
-          {isEdit ? "บันทึก" : "เพิ่มสาขา"}
-        </button>
+      <div className="sm:col-span-2">
+        <Button type="submit">{isEdit ? "บันทึก" : "เพิ่มสาขา"}</Button>
       </div>
     </form>
   );

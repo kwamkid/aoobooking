@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { hotelHref } from "@/lib/hotel/href";
+import { Card, Field, Input, Select, Button } from "@/components/ui";
 import {
   checkAvailability,
   submitBooking,
@@ -10,10 +11,6 @@ import {
 } from "../actions";
 
 type Item = { id: string; name: string; property_id: string };
-
-const field =
-  "w-full rounded-md border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900";
-const label = "mb-1 block text-xs font-medium text-neutral-500";
 
 export function BookingWizard({
   hotelSlug,
@@ -55,7 +52,7 @@ export function BookingWizard({
   );
 
   const canCheck =
-    propertyId && roomTypeId && ratePlanId && checkIn && checkOut && rooms >= 1;
+    !!(propertyId && roomTypeId && ratePlanId && checkIn && checkOut) && rooms >= 1;
 
   async function onCheck() {
     setError(null);
@@ -110,20 +107,16 @@ export function BookingWizard({
   }
 
   // เปลี่ยน input ใดๆ ที่กระทบราคา → ล้างผลตรวจเดิม (กันจองจากราคาเก่า)
-  function resetAvail() {
-    setAvail(null);
-  }
+  const resetAvail = () => setAvail(null);
 
   return (
     <div className="space-y-6">
       {/* ① เลือกห้อง + วัน */}
-      <section className="rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
-        <h2 className="mb-3 font-semibold">① ห้องพัก &amp; วันที่</h2>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="col-span-2">
-            <label className={label}>สาขา</label>
-            <select
-              className={field}
+      <Card>
+        <h2 className="mb-3 font-semibold text-fg">① ห้องพัก &amp; วันที่</h2>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="สาขา" className="sm:col-span-2">
+            <Select
               value={propertyId}
               onChange={(e) => {
                 setPropertyId(e.target.value);
@@ -137,13 +130,11 @@ export function BookingWizard({
                   {p.name}
                 </option>
               ))}
-            </select>
-          </div>
+            </Select>
+          </Field>
 
-          <div>
-            <label className={label}>ประเภทห้อง</label>
-            <select
-              className={field}
+          <Field label="ประเภทห้อง">
+            <Select
               value={roomTypeId}
               onChange={(e) => {
                 setRoomTypeId(e.target.value);
@@ -156,12 +147,10 @@ export function BookingWizard({
                   {r.name}
                 </option>
               ))}
-            </select>
-          </div>
-          <div>
-            <label className={label}>Rate plan</label>
-            <select
-              className={field}
+            </Select>
+          </Field>
+          <Field label="Rate plan">
+            <Select
               value={ratePlanId}
               onChange={(e) => {
                 setRatePlanId(e.target.value);
@@ -174,158 +163,133 @@ export function BookingWizard({
                   {r.name}
                 </option>
               ))}
-            </select>
-          </div>
+            </Select>
+          </Field>
 
-          <div>
-            <label className={label}>เช็คอิน</label>
-            <input
+          <Field label="เช็คอิน">
+            <Input
               type="date"
-              className={field}
               value={checkIn}
               onChange={(e) => {
                 setCheckIn(e.target.value);
                 resetAvail();
               }}
             />
-          </div>
-          <div>
-            <label className={label}>เช็คเอาท์</label>
-            <input
+          </Field>
+          <Field label="เช็คเอาท์">
+            <Input
               type="date"
-              className={field}
               value={checkOut}
               onChange={(e) => {
                 setCheckOut(e.target.value);
                 resetAvail();
               }}
             />
-          </div>
+          </Field>
 
-          <div>
-            <label className={label}>จำนวนห้อง</label>
-            <input
+          <Field label="จำนวนห้อง">
+            <Input
               type="number"
               min={1}
-              className={field}
               value={rooms}
               onChange={(e) => {
                 setRooms(Number(e.target.value));
                 resetAvail();
               }}
             />
-          </div>
+          </Field>
           <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className={label}>ผู้ใหญ่</label>
-              <input
+            <Field label="ผู้ใหญ่">
+              <Input
                 type="number"
                 min={1}
-                className={field}
                 value={adults}
                 onChange={(e) => {
                   setAdults(Number(e.target.value));
                   resetAvail();
                 }}
               />
-            </div>
-            <div>
-              <label className={label}>เด็ก</label>
-              <input
+            </Field>
+            <Field label="เด็ก">
+              <Input
                 type="number"
                 min={0}
-                className={field}
                 value={children}
                 onChange={(e) => {
                   setChildren(Number(e.target.value));
                   resetAvail();
                 }}
               />
-            </div>
+            </Field>
           </div>
         </div>
 
-        <button
+        <Button
+          variant="secondary"
           onClick={onCheck}
           disabled={!canCheck || checking}
-          className="mt-4 rounded-md border border-neutral-300 px-4 py-2 text-sm disabled:opacity-40 dark:border-neutral-700"
+          className="mt-4"
         >
           {checking ? "กำลังตรวจ…" : "ตรวจห้องว่าง & ราคา"}
-        </button>
-      </section>
+        </Button>
+      </Card>
 
       {/* ผลตรวจ */}
       {avail && !avail.ok && (
-        <p className="rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30">
+        <p className="rounded-(--radius) bg-danger-soft p-3 text-sm text-danger">
           {avail.reason}
         </p>
       )}
 
       {avail?.ok && (
         <>
-          <section className="rounded-lg border border-green-300 bg-green-50 p-4 dark:border-green-800 dark:bg-green-950/20">
+          <div className="rounded-lg border border-success bg-success-soft p-4">
             <div className="flex items-baseline justify-between">
-              <span className="font-semibold text-green-800 dark:text-green-300">
-                ว่าง — {avail.nights} คืน
-              </span>
-              <span className="text-lg font-bold">
+              <span className="font-semibold text-success">ว่าง — {avail.nights} คืน</span>
+              <span className="text-lg font-bold text-fg">
                 {avail.totalBaht.toLocaleString()}฿
               </span>
             </div>
-            <ul className="mt-2 text-xs text-neutral-500">
+            <ul className="mt-2 text-xs text-fg-muted">
               {avail.perNight.map((n) => (
                 <li key={n.date}>
                   {n.date} · {n.priceBaht.toLocaleString()}฿
                 </li>
               ))}
             </ul>
-          </section>
+          </div>
 
           {/* ② ข้อมูลแขก */}
-          <section className="rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
-            <h2 className="mb-3 font-semibold">② ข้อมูลแขก</h2>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2">
-                <label className={label}>ชื่อ-นามสกุล *</label>
-                <input
-                  className={field}
-                  value={guestName}
-                  onChange={(e) => setGuestName(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className={label}>โทรศัพท์</label>
-                <input
-                  className={field}
-                  value={guestPhone}
-                  onChange={(e) => setGuestPhone(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className={label}>อีเมล</label>
-                <input
-                  className={field}
-                  value={guestEmail}
-                  onChange={(e) => setGuestEmail(e.target.value)}
-                />
-              </div>
+          <Card>
+            <h2 className="mb-3 font-semibold text-fg">② ข้อมูลแขก</h2>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field label="ชื่อ-นามสกุล *" className="sm:col-span-2">
+                <Input value={guestName} onChange={(e) => setGuestName(e.target.value)} />
+              </Field>
+              <Field label="โทรศัพท์">
+                <Input value={guestPhone} onChange={(e) => setGuestPhone(e.target.value)} />
+              </Field>
+              <Field label="อีเมล">
+                <Input value={guestEmail} onChange={(e) => setGuestEmail(e.target.value)} />
+              </Field>
             </div>
-          </section>
+          </Card>
 
           {/* ③ ยืนยัน */}
-          <button
+          <Button
+            size="lg"
             onClick={onSubmit}
             disabled={submitting}
-            className="w-full rounded-md bg-neutral-900 px-4 py-3 font-medium text-white disabled:opacity-40 dark:bg-white dark:text-neutral-900"
+            className="w-full"
           >
             {submitting
               ? "กำลังจอง…"
               : `ยืนยันการจอง (${avail.totalBaht.toLocaleString()}฿)`}
-          </button>
+          </Button>
         </>
       )}
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
     </div>
   );
 }
