@@ -152,8 +152,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={api}>
       {children}
+      {/* ขวาล่าง — อันใหม่โผล่ล่างสุด (ใกล้มุม) แล้วดันขึ้น (flex-col-reverse) */}
       {toasts.length > 0 && (
-        <div className="pointer-events-none fixed right-4 top-4 z-[9999] flex flex-col items-end gap-2">
+        <div className="pointer-events-none fixed bottom-4 right-4 z-9999 flex flex-col-reverse items-end gap-2">
           {toasts.map((t) => (
             <Toast
               key={t.id}

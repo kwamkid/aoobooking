@@ -299,10 +299,10 @@ select.field {
 /* --- surface helpers --- */
 .divider { border-top: 1px solid var(--border); }
 
-/* --- toast (มุมขวาบน — เลื่อนเข้าจากขวา / จางออกผ่าน transition ใน component) --- */
+/* --- toast (มุมขวาล่าง — เลื่อนเข้าจากล่างขึ้น / จางออกผ่าน transition ใน component) --- */
 @keyframes toast-slide-in {
-  from { opacity: 0; transform: translateX(1rem); }
-  to { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; transform: translateY(1rem); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .toast-enter { animation: toast-slide-in 0.2s ease-out; }
 

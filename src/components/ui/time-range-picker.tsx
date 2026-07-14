@@ -282,7 +282,7 @@ export function TimePicker({
       {open && !disabled && (
         <div
           ref={listRef}
-          className="absolute z-50 mt-1 max-h-[200px] w-full min-w-[100px] overflow-y-auto overscroll-contain rounded-lg border border-border bg-bg-elevated p-1 shadow-lg"
+          className="absolute z-50 mt-1 max-h-42 w-full min-w-25 overflow-y-auto overscroll-contain rounded-lg border border-border bg-bg-elevated p-1 shadow-lg"
           onWheel={(e) => e.stopPropagation()}
           onTouchMove={(e) => e.stopPropagation()}
         >
