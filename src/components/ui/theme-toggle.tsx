@@ -16,12 +16,14 @@ function apply(mode: Mode) {
 }
 
 export function ThemeToggle() {
+  // default "system" ตอน SSR — sync ค่าจริงจาก localStorage หลัง mount (ไม่ apply ซ้ำ
+  // เพราะ inline script ใน <head> ตั้ง data-theme ไปแล้วก่อน render = ไม่มี flash)
   const [mode, setMode] = useState<Mode>("system");
 
-  // sync จาก localStorage ตอน mount
   useEffect(() => {
     const saved = (localStorage.getItem(KEY) as Mode) ?? "system";
     setMode(saved);
+    // ป้องกันเคส data-theme กับ localStorage หลุด sync (เช่นเปิดหลาย tab)
     apply(saved);
   }, []);
 

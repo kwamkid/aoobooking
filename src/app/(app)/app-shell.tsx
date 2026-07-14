@@ -114,6 +114,10 @@ export function AppShell({
   // user dropdown popover
   const avatarRef = useRef<HTMLButtonElement>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  // settings submenu popover (แยก desktop/mobile ให้ anchor ถูกตัว)
+  const settingsRef = useRef<HTMLButtonElement>(null);
+  const settingsRefMobile = useRef<HTMLButtonElement>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const sidebarBody = (isMobile: boolean) => {
     const rail = !isMobile && collapsed;
@@ -233,35 +237,70 @@ export function AppShell({
           })}
         </nav>
 
-        {/* ── settings (fix ล่างสุด — link เดียว, sub-menu เป็น tab ในหน้า) ── */}
+        {/* ── settings (fix ล่างสุด — กดแล้วเปิด popover submenu) ── */}
         <div className="border-t border-border px-3 py-2">
-          <Link
-            href={withHotel("/settings/properties")}
+          <button
+            ref={isMobile ? settingsRefMobile : settingsRef}
             title={rail ? "ตั้งค่า" : undefined}
-            onClick={() => setMobileOpen(false)}
-            className={`flex items-center rounded-(--radius) px-3 py-2.5 text-base font-medium transition-colors ${
-              rail ? "justify-center" : ""
+            onClick={() => setSettingsOpen((v) => !v)}
+            className={`flex w-full items-center rounded-(--radius) px-3 py-2.5 text-base font-medium transition-colors ${
+              rail ? "justify-center" : "justify-between"
             } ${
               SETTINGS_SUB.some((s) => isActive(s.href))
                 ? "bg-brand text-brand-fg shadow-(--shadow-brand)"
                 : "text-fg-muted hover:bg-bg-subtle hover:text-fg"
             }`}
           >
-            <Settings
-              size={19}
-              className={`${rail ? "" : "mr-3"} ${
-                SETTINGS_SUB.some((s) => isActive(s.href)) ? "text-brand-fg" : ""
-              }`}
-            />
-            {!rail && "ตั้งค่า"}
-          </Link>
+            <span className="flex items-center">
+              <Settings
+                size={19}
+                className={`${rail ? "" : "mr-3"} ${
+                  SETTINGS_SUB.some((s) => isActive(s.href)) ? "text-brand-fg" : ""
+                }`}
+              />
+              {!rail && "ตั้งค่า"}
+            </span>
+            {!rail && <ChevronsUpDown size={15} className="opacity-60" />}
+          </button>
         </div>
       </div>
     );
   };
 
+  // settings submenu popover — anchor ที่ปุ่มที่กำลังใช้ (mobile drawer เปิด → ปุ่มใน drawer)
+  const settingsPopover = (
+    <Popover
+      open={settingsOpen}
+      onClose={() => setSettingsOpen(false)}
+      anchor={(mobileOpen ? settingsRefMobile : settingsRef).current}
+      align="start"
+      ariaLabel="ตั้งค่า"
+    >
+      <div className="p-1">
+        {SETTINGS_SUB.map((s) => (
+          <Link
+            key={s.key}
+            href={withHotel(s.href)}
+            onClick={() => {
+              setSettingsOpen(false);
+              setMobileOpen(false);
+            }}
+            className={`block rounded-sm px-3 py-2 text-sm font-medium transition-colors ${
+              isActive(s.href)
+                ? "bg-brand-soft text-brand"
+                : "text-fg-muted hover:bg-bg-subtle hover:text-fg"
+            }`}
+          >
+            {s.label}
+          </Link>
+        ))}
+      </div>
+    </Popover>
+  );
+
   return (
     <div className="flex h-dvh overflow-hidden bg-bg">
+      {settingsPopover}
       {/* desktop sidebar */}
       <aside
         className={`hidden shrink-0 border-r border-border bg-bg-elevated transition-all duration-200 lg:block ${

@@ -26,6 +26,15 @@ export default async function RootLayout({
   const locale = await getLocale();
   return (
     <html lang={locale} className={ibmPlexSansThai.variable} suppressHydrationWarning>
+      <head>
+        {/* ตั้ง data-theme ก่อน browser วาดหน้า (กัน flash of wrong theme) —
+            อ่าน localStorage แล้ว set ทันที ก่อน React hydrate */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var m=localStorage.getItem('aoo-theme');if(m==='dark'||m==='light'){document.documentElement.setAttribute('data-theme',m);}}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className="antialiased">
         <NextIntlClientProvider>
           <ToastProvider>{children}</ToastProvider>
