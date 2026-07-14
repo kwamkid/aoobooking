@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       .eq("id", invoiceId)
       .eq("status", "pending");
     await admin.rpc("log_audit", {
-      p_hotel_id: null,
+      // p_hotel_id omit → null (platform-level audit, ยังไม่รู้ hotel)
       p_action: "invoice.failed",
       p_entity_type: "invoice",
       p_entity_id: invoiceId,

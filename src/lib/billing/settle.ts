@@ -1,5 +1,6 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { Json } from "@/types/database";
 
 // ⚠️ ห้ามย้ายไฟล์นี้เข้าไฟล์ "use server" — settleInvoicePaid ไม่มี auth check
 // (ถูกเรียกจาก webhook/cron/action ที่เช็คสิทธิ์แล้วเท่านั้น) ถ้าเป็น server action
@@ -35,7 +36,7 @@ export async function settleInvoicePaid(
     .update({
       status: "paid",
       paid_at: new Date().toISOString(),
-      raw: opts.raw ?? (opts.dev ? { dev: true } : null),
+      raw: (opts.raw ?? (opts.dev ? { dev: true } : null)) as Json,
       updated_at: new Date().toISOString(),
     })
     .eq("id", invoiceId);

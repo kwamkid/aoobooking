@@ -2,7 +2,7 @@ project_id = "aoobooking"
 
 [db]
 port = 54322
-major_version = 15
+major_version = 17
 
 [auth]
 enabled = true

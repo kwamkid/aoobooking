@@ -138,7 +138,7 @@ export async function submitBooking(input: {
       email: input.guestEmail ?? null,
     },
     p_channel: "front_desk",
-    p_hold_minutes: null, // front desk ยืนยันทันที ไม่มี hold
+    // p_hold_minutes: omit → DB default null = front desk ยืนยันทันที ไม่มี hold
   });
   if (error) throw new Error(error.message);
 
