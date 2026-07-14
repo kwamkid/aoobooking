@@ -8,3 +8,4 @@ export { Badge, BOOKING_STATUS_TONE } from "./badge";
 export { PageHeader } from "./page-header";
 export { EmptyState } from "./empty-state";
 export { Table, THead, TBody, TR, TH, TD } from "./table";
+export { ThemeToggle } from "./theme-toggle";

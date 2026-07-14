@@ -17,7 +17,9 @@ import {
   TR,
   TH,
   TD,
+  ThemeToggle,
 } from "@/components/ui";
+import { ThemePanel } from "./theme-panel";
 
 // ============================================================================
 // /design — Design System showcase (DEV เท่านั้น)
@@ -54,7 +56,46 @@ export default function DesignSystemPage() {
       <PageHeader
         title="Design System"
         subtitle="ดู + ปรับ palette/token/component ที่เดียว · แก้สีจริงที่ src/app/globals.css (dev เท่านั้น)"
+        action={<ThemeToggle />}
       />
+
+      {/* ---- Light vs Dark เทียบคู่ ---- */}
+      <Section title="Light / Dark เทียบคู่">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {(["light", "dark"] as const).map((t) => (
+            <ThemePanel key={t} theme={t}>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-fg">โรงแรมของฉัน</h3>
+                  <Badge tone="brand">Pro</Badge>
+                </div>
+                <p className="text-sm text-fg-muted">
+                  ตัวอย่างการ์ด + ปุ่ม + ฟอร์ม ในโหมด {t === "light" ? "สว่าง" : "มืด"}
+                </p>
+                <Field label="ชื่อสาขา">
+                  <Input placeholder="สาขาหลัก" />
+                </Field>
+                <div className="flex flex-wrap gap-2">
+                  <Badge tone="success">ว่าง</Badge>
+                  <Badge tone="warning">ใกล้เต็ม</Badge>
+                  <Badge tone="danger">เต็ม</Badge>
+                  <Badge tone="info">จองแล้ว</Badge>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm">บันทึก</Button>
+                  <Button size="sm" variant="secondary">
+                    ยกเลิก
+                  </Button>
+                </div>
+              </div>
+            </ThemePanel>
+          ))}
+        </div>
+        <p className="mt-2 text-xs text-fg-subtle">
+          กล่องบังคับ theme ในตัว (ไม่ขึ้นกับปุ่มด้านบน) — ปรับ token ใน globals.css แล้วเทียบ 2
+          โหมดพร้อมกัน
+        </p>
+      </Section>
 
       {/* ---- Palette ---- */}
       <Section title="Brand Palette">
@@ -105,22 +146,23 @@ export default function DesignSystemPage() {
         </div>
       </Section>
 
-      {/* ---- Typography ---- */}
-      <Section title="Typography — IBM Plex Sans Thai">
+      {/* ---- Typography — base 16px ---- */}
+      <Section title="Typography — IBM Plex Sans Thai (base 16px)">
         <div className="space-y-2">
-          <p className="text-3xl font-bold text-fg">พาดหัวใหญ่ Heading 3xl ABC 123</p>
-          <p className="text-2xl font-bold text-fg">หัวข้อ Heading 2xl ABC 123</p>
-          <p className="text-lg font-semibold text-fg">หัวข้อย่อย Semibold lg</p>
-          <p className="text-base text-fg">ข้อความปกติ Body — โรงแรมจองห้องพัก The quick brown fox</p>
-          <p className="text-sm text-fg-muted">ข้อความรอง (muted) — คำอธิบายเพิ่มเติม</p>
-          <p className="text-xs text-fg-subtle">ข้อความจาง (subtle) — meta / label</p>
-          <div className="flex gap-3 text-fg">
-            <span className="font-light">Light 300</span>
-            <span className="font-normal">Regular 400</span>
-            <span className="font-medium">Medium 500</span>
-            <span className="font-semibold">Semibold 600</span>
-            <span className="font-bold">Bold 700</span>
-          </div>
+          <TypeRow cls="text-3xl font-bold" size="30px" label="Heading 3xl" />
+          <TypeRow cls="text-2xl font-bold" size="24px" label="Heading 2xl" />
+          <TypeRow cls="text-xl font-semibold" size="20px" label="Heading xl" />
+          <TypeRow cls="text-lg font-semibold" size="18px" label="Subhead lg" />
+          <TypeRow cls="text-base" size="16px ★ regular" label="Body (ฐาน)" />
+          <TypeRow cls="text-sm text-fg-muted" size="14px" label="Small / muted" />
+          <TypeRow cls="text-xs text-fg-subtle" size="12px" label="Meta / label" />
+        </div>
+        <div className="mt-3 flex flex-wrap gap-3 text-fg">
+          <span className="font-light">Light 300</span>
+          <span className="font-normal">Regular 400</span>
+          <span className="font-medium">Medium 500</span>
+          <span className="font-semibold">Semibold 600</span>
+          <span className="font-bold">Bold 700</span>
         </div>
       </Section>
 
@@ -156,8 +198,18 @@ export default function DesignSystemPage() {
       </Section>
 
       {/* ---- Inputs ---- */}
-      <Section title="Form Controls">
-        <div className="grid max-w-lg grid-cols-1 gap-3 sm:grid-cols-2">
+      <Section title="Form Controls — สูงเท่ากัน 40px · font 16px">
+        {/* แถวเรียงกันโชว์ว่า input/select/button สูงเท่ากันเป๊ะ */}
+        <div className="flex flex-wrap items-end gap-2">
+          <Input placeholder="input" className="w-40" />
+          <Select className="w-40">
+            <option>select</option>
+          </Select>
+          <Button>ปุ่ม</Button>
+          <Button variant="secondary">secondary</Button>
+        </div>
+
+        <div className="mt-4 grid max-w-lg grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Input">
             <Input placeholder="พิมพ์ข้อความ…" />
           </Field>
@@ -170,7 +222,7 @@ export default function DesignSystemPage() {
           <Field label="SearchBox" className="sm:col-span-2">
             <SearchBox placeholder="ค้นหา…" />
           </Field>
-          <Field label="Textarea" className="sm:col-span-2">
+          <Field label="Textarea (ยืดได้ · font 16px)" className="sm:col-span-2">
             <Textarea rows={2} placeholder="ข้อความยาว…" />
           </Field>
         </div>
@@ -245,5 +297,16 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       <h2 className="mb-3 text-lg font-semibold text-fg">{title}</h2>
       {children}
     </section>
+  );
+}
+
+function TypeRow({ cls, size, label }: { cls: string; size: string; label: string }) {
+  return (
+    <div className="flex items-baseline gap-3">
+      <code className="w-28 shrink-0 text-xs text-fg-subtle">{size}</code>
+      <span className={`${cls.includes("text-fg") ? cls : `${cls} text-fg`}`}>
+        {label} — โรงแรมจองห้องพัก ABC 123
+      </span>
+    </div>
   );
 }

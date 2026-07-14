@@ -90,8 +90,10 @@
     --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.6);
   }
 }
-/* explicit dark (data-theme ชนะ prefers) */
-:root[data-theme="dark"] {
+/* explicit dark (data-theme ชนะ prefers) — match ทั้ง :root และ element ย่อย
+   (element ย่อยรองรับ ThemePanel ที่ scope theme ในกล่องเดียวได้) */
+:root[data-theme="dark"],
+[data-theme="dark"] {
   --bg: var(--c-neutral-900);
   --bg-elevated: var(--c-neutral-800);
   --bg-subtle: var(--c-neutral-700);
@@ -105,6 +107,23 @@
   --warning-soft: #342c0a;
   --danger-soft: #40201a;
   --info-soft: #241a40;
+}
+
+/* explicit light — บังคับ light ในกล่อง (แม้ทั้งหน้าเป็น dark) สำหรับ ThemePanel */
+[data-theme="light"] {
+  --bg: var(--c-neutral-50);
+  --bg-elevated: var(--c-neutral-0);
+  --bg-subtle: var(--c-neutral-100);
+  --fg: var(--c-neutral-900);
+  --fg-muted: var(--c-neutral-500);
+  --fg-subtle: var(--c-neutral-400);
+  --border: var(--c-neutral-200);
+  --border-strong: var(--c-neutral-300);
+  --brand-soft: var(--c-red-soft);
+  --success-soft: var(--c-green-soft);
+  --warning-soft: var(--c-yellow-soft);
+  --danger-soft: var(--c-red-soft);
+  --info-soft: var(--c-purple-soft);
 }
 
 /* ---- expose tokens to Tailwind utilities (bg-brand, text-fg-muted, ...) ---- */
@@ -143,10 +162,16 @@
   --radius-lg: var(--radius-lg);
 }
 
+/* base font-size = 16px (regular) — ขนาดอื่น (text-sm/lg/xl…) สเกลตามนี้ (rules.md #16) */
+html {
+  font-size: 16px;
+}
 body {
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-sans);
+  font-size: 1rem; /* 16px */
+  line-height: 1.6;
 }
 
 /* ============================================================================
@@ -156,15 +181,19 @@ body {
 
 /* --- buttons --- */
 .btn {
+/* control height มาตรฐาน — input/select/button สูงเท่ากันทุกตัว (rules.md #16) */
+  --control-h: 2.5rem; /* 40px */
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  height: var(--control-h);
+  box-sizing: border-box;
   border-radius: var(--radius);
   font-weight: 500;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  padding: 0.5rem 1rem;
+  font-size: 1rem; /* 16px regular */
+  line-height: 1.5;
+  padding: 0 1rem;
   cursor: pointer;
   transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
   white-space: nowrap;
@@ -178,19 +207,36 @@ body {
 .btn-ghost:hover:not(:disabled) { background: var(--bg-subtle); color: var(--fg); }
 .btn-danger { background: var(--danger); color: #fff; }
 .btn-danger:hover:not(:disabled) { filter: brightness(0.94); }
-.btn-sm { padding: 0.3125rem 0.75rem; font-size: 0.8125rem; }
-.btn-lg { padding: 0.75rem 1.25rem; font-size: 1rem; }
+.btn-sm { height: 2rem; padding: 0 0.75rem; font-size: 0.875rem; }
+.btn-lg { height: 3rem; padding: 0 1.25rem; font-size: 1.0625rem; }
 
-/* --- inputs --- */
+/* --- inputs — สูงเท่า .btn (40px) + font 16px เท่ากันทุกตัว --- */
 .field {
   width: 100%;
+  height: 2.5rem; /* 40px — เท่า .btn */
+  box-sizing: border-box;
   border-radius: var(--radius);
   border: 1px solid var(--border-strong);
   background: var(--bg-elevated);
   color: var(--fg);
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
+  padding: 0 0.75rem;
+  font-size: 1rem; /* 16px regular */
+  line-height: 1.5;
   transition: border-color 0.15s, box-shadow 0.15s;
+}
+/* textarea = ความสูงยืดได้ (override height) แต่ font 16px เท่ากัน */
+textarea.field {
+  height: auto;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+}
+/* select ให้ padding ขวาเผื่อลูกศร + สูงเท่า input */
+select.field {
+  padding-right: 2rem;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='%23999' stroke-width='1.5'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
 }
 .field::placeholder { color: var(--fg-subtle); }
 .field:focus {

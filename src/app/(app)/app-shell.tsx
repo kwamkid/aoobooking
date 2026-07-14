@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { hotelHref } from "@/lib/hotel/href";
+import { ThemeToggle } from "@/components/ui";
 
 // เมนู sidebar — ทุก link ผ่าน hotelHref() (?h=<slug>)
 const NAV = [
@@ -74,9 +75,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen bg-bg">
       {/* --- desktop sidebar --- */}
-      <aside className="hidden w-56 shrink-0 border-r border-border bg-bg-elevated p-4 md:block">
+      <aside className="hidden w-56 shrink-0 flex-col border-r border-border bg-bg-elevated p-4 md:flex">
         <div className="mb-6">{brand}</div>
         {nav}
+        <div className="mt-auto pt-4">
+          <ThemeToggle />
+        </div>
       </aside>
 
       {/* --- mobile drawer --- */}
