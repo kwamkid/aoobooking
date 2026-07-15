@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateHotel } from "@/lib/hotel/revalidate";
 import { requireHotelMember, isOwner } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -78,13 +78,13 @@ export async function upgradePackage(formData: FormData) {
       amountSatang,
       method: "qr_promptpay",
     });
-    revalidatePath("/settings/package");
+    revalidateHotel(hotelSlug, "/settings/package");
     return;
   }
 
   // ── dev mode (ยังไม่มี Beam): จ่ายสำเร็จทันที เพื่อเทสต์ flow ครบวง ──
   await settleInvoicePaid(invoice.id, { dev: true });
-  revalidatePath("/settings/package");
+  revalidateHotel(hotelSlug, "/settings/package");
 }
 
 /** ดาวน์เกรด — นัดมีผลตอนจบรอบ (ไม่คืนเงินส่วนที่เหลือ) */
@@ -147,7 +147,7 @@ export async function scheduleDowngrade(formData: FormData) {
       },
     });
   }
-  revalidatePath("/settings/package");
+  revalidateHotel(hotelSlug, "/settings/package");
 }
 
 /** ยกเลิกดาวน์เกรดที่นัดไว้ */
@@ -179,7 +179,7 @@ export async function cancelScheduledDowngrade(formData: FormData) {
     p_entity_id: sub.id,
     p_old: { scheduled_package_id: sub.scheduled_package_id },
   });
-  revalidatePath("/settings/package");
+  revalidateHotel(hotelSlug, "/settings/package");
 }
 
 /** ใช้โค้ดโปรโมชัน — รับสิทธิ์ใช้ฟรี (trial)
@@ -199,6 +199,6 @@ export async function redeemPromoCode(formData: FormData) {
   });
   if (error) throw new Error(error.message);
 
-  revalidatePath("/settings/package");
+  revalidateHotel(hotelSlug, "/settings/package");
   return data as unknown as { trial_until: string; free_months: number };
 }

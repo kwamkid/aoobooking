@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateHotel } from "@/lib/hotel/revalidate";
 import { requireHotelMember } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -19,7 +19,7 @@ export async function checkInBooking(fd: FormData) {
     p_room_assignments: assignments,
   });
   if (error) throw new Error(error.message);
-  revalidatePath("/front-desk");
+  revalidateHotel(hotelSlug, "/front-desk");
 }
 
 // check-out: RPC block ถ้า balance ≠ 0
@@ -33,5 +33,5 @@ export async function checkOutBooking(fd: FormData) {
     p_booking_id: bookingId,
   });
   if (error) throw new Error(error.message);
-  revalidatePath("/front-desk");
+  revalidateHotel(hotelSlug, "/front-desk");
 }

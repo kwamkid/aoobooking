@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateHotel } from "@/lib/hotel/revalidate";
 import { requireHotelMember } from "@/lib/auth";
 import { requirePermission } from "@/lib/permission";
 import { assertWithinLimit } from "@/lib/package/resolve-access";
@@ -40,7 +40,7 @@ export async function toggleMultiProperty(fd: FormData) {
     p_entity_id: hotel.id,
     p_new: { multi_property: enable },
   });
-  revalidatePath("/settings/properties");
+  revalidateHotel(hotelSlug, "/settings/properties");
 }
 
 // slug จากชื่อสาขา — a-z0-9 + ขีด (booking engine: /hotel/property)
@@ -115,7 +115,7 @@ export async function createProperty(fd: FormData) {
     p_new: { name: input.name, slug },
   });
 
-  revalidatePath("/settings/properties");
+  revalidateHotel(hotelSlug, "/settings/properties");
 }
 
 /** แก้สาขา */
@@ -144,7 +144,7 @@ export async function updateProperty(fd: FormData) {
     p_new: { name: input.name },
   });
 
-  revalidatePath("/settings/properties");
+  revalidateHotel(hotelSlug, "/settings/properties");
 }
 
 /** ปิดสาขา (soft delete) */
@@ -169,7 +169,7 @@ export async function deleteProperty(fd: FormData) {
     p_entity_id: propertyId,
   });
 
-  revalidatePath("/settings/properties");
+  revalidateHotel(hotelSlug, "/settings/properties");
 }
 
 // column mapping (ไม่รวม slug — set แยกตอน create)

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateHotel } from "@/lib/hotel/revalidate";
 import { requireHotelMember } from "@/lib/auth";
 import { requirePermission } from "@/lib/permission";
 import { createClient } from "@/lib/supabase/server";
@@ -55,7 +55,7 @@ export async function createRatePlan(fd: FormData) {
     p_entity_id: (data as { id: string }).id,
     p_new: { name },
   });
-  revalidatePath("/rates");
+  revalidateHotel(hotelSlug, "/rates");
 }
 
 // ── bulk price setter (ตั้งราคาช่วงวัน — season) ─────────────────────────────
@@ -112,5 +112,5 @@ export async function setBulkPrices(fd: FormData) {
     p_entity_id: ratePlanId,
     p_new: { from, to, price_satang: priceSatang, days: rows.length },
   });
-  revalidatePath("/rates");
+  revalidateHotel(hotelSlug, "/rates");
 }

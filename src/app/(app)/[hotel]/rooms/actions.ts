@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateHotel } from "@/lib/hotel/revalidate";
 import { requireHotelMember } from "@/lib/auth";
 import { requirePermission } from "@/lib/permission";
 import { assertWithinLimit } from "@/lib/package/resolve-access";
@@ -44,7 +44,8 @@ export async function createRoomType(fd: FormData) {
     p_entity_id: (data as { id: string }).id,
     p_new: { name },
   });
-  revalidatePath("/rooms");
+  // /rates ลิสต์ประเภทห้องด้วย → ล้างพร้อมกัน
+  revalidateHotel(hotelSlug, "/rooms", "/rates");
 }
 
 // ── rooms ────────────────────────────────────────────────────────────────────
@@ -86,7 +87,7 @@ export async function createRoom(fd: FormData) {
     p_entity_id: (data as { id: string }).id,
     p_new: { room_number: roomNumber },
   });
-  revalidatePath("/rooms");
+  revalidateHotel(hotelSlug, "/rooms");
 }
 
 export async function deleteRoom(fd: FormData) {
@@ -110,5 +111,5 @@ export async function deleteRoom(fd: FormData) {
     p_entity_type: "room",
     p_entity_id: roomId,
   });
-  revalidatePath("/rooms");
+  revalidateHotel(hotelSlug, "/rooms");
 }

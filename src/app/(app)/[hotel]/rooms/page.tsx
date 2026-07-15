@@ -4,7 +4,7 @@ import { can } from "@/lib/permission";
 import { hotelHref } from "@/lib/hotel/href";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader, Card, EmptyState } from "@/components/ui";
-import { RoomTypeForm, RoomForm } from "./forms";
+import { RoomTypeModalButton, RoomModalButton } from "./forms";
 import { deleteRoom } from "./actions";
 
 type Prop = { id: string; name: string; slug: string };
@@ -83,7 +83,15 @@ export default async function RoomsPage({
 
   return (
     <div className="p-4 sm:p-8">
-      <PageHeader title="ห้องพัก" subtitle={hotel.name} />
+      <PageHeader
+        title="ห้องพัก"
+        subtitle={hotel.name}
+        action={
+          canEdit && roomTypes.length > 0 ? (
+            <RoomTypeModalButton hotelSlug={hotel.slug} propertyId={activeProp.id} />
+          ) : null
+        }
+      />
 
       {/* property switcher — โชว์เฉพาะโรงแรมหลายสาขา */}
       {hotel.multi_property && (
@@ -106,9 +114,19 @@ export default async function RoomsPage({
 
       {/* room types */}
       <section className="mt-8">
-        <h2 className="mb-3 text-lg font-semibold text-fg">ประเภทห้อง</h2>
-        {roomTypes.length === 0 && (
-          <p className="text-sm text-fg-subtle">ยังไม่มีประเภทห้อง</p>
+        {roomTypes.length === 0 ? (
+          <EmptyState
+            art="bed"
+            title="ยังไม่มีประเภทห้อง"
+            description="เริ่มจากสร้างประเภทห้อง (เช่น Deluxe, Superior) แล้วค่อยเพิ่มห้องจริงเข้าไปในแต่ละประเภท"
+            action={
+              canEdit ? (
+                <RoomTypeModalButton hotelSlug={hotel.slug} propertyId={activeProp.id} />
+              ) : undefined
+            }
+          />
+        ) : (
+          <h2 className="mb-3 text-lg font-semibold text-fg">ประเภทห้อง</h2>
         )}
         <div className="space-y-4">
           {roomTypes.map((rt) => {
@@ -117,8 +135,8 @@ export default async function RoomsPage({
               <Card key={rt.id}>
                 <div className="flex items-baseline justify-between">
                   <div>
-                    <span className="font-medium text-fg">{rt.name}</span>
-                    <span className="ml-2 text-xs text-fg-muted">
+                    <span className="text-base font-medium text-fg">{rt.name}</span>
+                    <span className="ml-2 text-sm text-fg-muted">
                       พัก {rt.base_occupancy}–{rt.max_occupancy} คน · ผู้ใหญ่เพิ่ม{" "}
                       {(rt.extra_adult_satang / 100).toLocaleString()}฿
                     </span>
@@ -126,7 +144,12 @@ export default async function RoomsPage({
                   <span className="text-sm text-fg-subtle">{typeRooms.length} ห้อง</span>
                 </div>
 
-                <div className="mt-2 flex flex-wrap gap-2">
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  {typeRooms.length === 0 && (
+                    <span className="text-sm text-fg-subtle">
+                      ยังไม่มีห้องในประเภทนี้
+                    </span>
+                  )}
                   {typeRooms.map((r) => (
                     <span
                       key={r.id}
@@ -149,10 +172,11 @@ export default async function RoomsPage({
 
                 {canEdit && (
                   <div className="mt-3">
-                    <RoomForm
+                    <RoomModalButton
                       hotelSlug={hotel.slug}
                       propertyId={activeProp.id}
                       roomTypeId={rt.id}
+                      roomTypeName={rt.name}
                     />
                   </div>
                 )}
@@ -161,14 +185,6 @@ export default async function RoomsPage({
           })}
         </div>
       </section>
-
-      {/* new room type */}
-      {canEdit && (
-        <section className="mt-8 border-t border-border pt-6">
-          <h2 className="mb-3 text-lg font-semibold text-fg">เพิ่มประเภทห้อง</h2>
-          <RoomTypeForm hotelSlug={hotel.slug} propertyId={activeProp.id} />
-        </section>
-      )}
     </div>
   );
 }

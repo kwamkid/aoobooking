@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateHotel } from "@/lib/hotel/revalidate";
 import { requireHotelMember } from "@/lib/auth";
 import { requirePermission } from "@/lib/permission";
 import { createClient } from "@/lib/supabase/server";
@@ -51,7 +51,7 @@ export async function updateGuestId(fd: FormData) {
     p_entity_id: guestId,
     p_new: { id_type: idType, has_consent: consentGiven },
   });
-  revalidatePath("/guests");
+  revalidateHotel(hotelSlug, "/guests");
 }
 
 // ลบข้อมูล ID (right to erasure PDPA) — ต้องมีสิทธิ์ guests.edit
@@ -80,5 +80,5 @@ export async function eraseGuestId(fd: FormData) {
     p_entity_id: guestId,
     p_note: "PDPA right to erasure",
   });
-  revalidatePath("/guests");
+  revalidateHotel(hotelSlug, "/guests");
 }
