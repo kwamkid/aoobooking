@@ -24,8 +24,15 @@ export default async function LoginPage() {
 
         <div className="relative z-10 flex flex-col justify-center px-12 text-brand-fg xl:px-20">
           <div className="mb-8 flex items-center gap-3">
-            {/* logo สีขาวบนพื้น brand — ใช้ mask (ไม่ต้องมีกรอบ/ไม่ใช้ invert) */}
-            <span className="logo-mask h-12 w-12 bg-white" aria-hidden />
+            {/* logo สีขาวบนพื้น brand — filter invert (ไม่มีกรอบ) */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/aoobooking-logo.svg"
+              alt="AooBooking"
+              width={48}
+              height={48}
+              className="h-12 w-12 brightness-0 invert"
+            />
             <span className="text-2xl font-bold">AooBooking</span>
           </div>
 

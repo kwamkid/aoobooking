@@ -323,17 +323,4 @@ select.field {
 .modal-panel { animation: modal-pop-in 0.15s ease-out; }
 
 
-/* --- logo mask — ทำ logo เป็นสีเดียว (เช่นขาวบนพื้น brand) โดยไม่ต้องมีกรอบ/invert --- */
-.logo-mask {
-  -webkit-mask-image: url("/aoobooking-logo.svg");
-  mask-image: url("/aoobooking-logo.svg");
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
-  -webkit-mask-size: contain;
-  mask-size: contain;
-  display: inline-block;
-}
-
 } /* end @layer components */
