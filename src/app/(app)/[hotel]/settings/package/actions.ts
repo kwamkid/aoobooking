@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireHotelMember, isOwner } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { hasBeam, createCharge } from "@/lib/billing/beam";
 import { splitVatInclusiveSatang } from "@/lib/billing";
 import { settleInvoicePaid } from "@/lib/billing/settle";
@@ -179,4 +180,25 @@ export async function cancelScheduledDowngrade(formData: FormData) {
     p_old: { scheduled_package_id: sub.scheduled_package_id },
   });
   revalidatePath("/settings/package");
+}
+
+/** ใช้โค้ดโปรโมชัน — รับสิทธิ์ใช้ฟรี (trial)
+ *  ต้องเรียกผ่าน createClient() (ไม่ใช่ admin) เพราะ RPC เช็คสิทธิ์ด้วย auth.uid()
+ *  ข้างใน (can_manage_hotel) + validate โค้ด (หมดอายุ/ใช้ครบ/ปิด) แล้ว raise ไทย */
+export async function redeemPromoCode(formData: FormData) {
+  const hotelSlug = formData.get("hotelSlug") as string;
+  const code = (formData.get("code") as string)?.trim();
+  if (!code) throw new Error("กรุณากรอกโค้ด");
+
+  const { hotel } = await requireOwner(hotelSlug);
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.rpc("redeem_promo_code", {
+    p_hotel_id: hotel.id,
+    p_code: code,
+  });
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/settings/package");
+  return data as unknown as { trial_until: string; free_months: number };
 }

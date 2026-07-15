@@ -8,6 +8,7 @@ import {
   scheduleDowngrade,
   cancelScheduledDowngrade,
 } from "./actions";
+import { RedeemForm } from "./redeem-form";
 
 type Tone = "neutral" | "brand" | "success" | "warning" | "danger" | "info";
 const SUB_STATUS_TONE: Record<string, Tone> = {
@@ -65,6 +66,15 @@ export default async function PackageSettingsPage({
               {new Date(sub.current_period_end).toLocaleDateString("th-TH")}
             </span>
           </div>
+          {sub.status === "trialing" && (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <Badge tone="info">ทดลองใช้ฟรี</Badge>
+              <span className="text-fg-muted">
+                ทดลองใช้ฟรีถึง{" "}
+                {new Date(sub.current_period_end).toLocaleDateString("th-TH")}
+              </span>
+            </div>
+          )}
           {scheduledPkg && (
             <div className="mt-2 flex flex-wrap items-center gap-2 text-warning">
               <span>
@@ -83,6 +93,8 @@ export default async function PackageSettingsPage({
           )}
         </Card>
       )}
+
+      {owner && <RedeemForm hotelSlug={hotel.slug} />}
 
       {!owner && (
         <p className="mt-4 text-sm text-warning">

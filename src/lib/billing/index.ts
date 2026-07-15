@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/types/database";
 
 export type Package = {
   id: string;
@@ -21,7 +22,8 @@ export type Subscription = {
   hotel_id: string;
   package_id: string;
   billing_cycle: "monthly" | "yearly";
-  status: "active" | "grace" | "expired" | "canceled";
+  // ดึงจาก enum ที่ generate จาก DB — กันลืมอัปเดตเมื่อเพิ่มสถานะใหม่ (เช่น 'trialing')
+  status: Database["public"]["Enums"]["subscription_status"];
   current_period_end: string;
   grace_until: string | null;
   scheduled_package_id: string | null;
