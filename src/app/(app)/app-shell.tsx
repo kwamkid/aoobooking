@@ -22,7 +22,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   LogOut,
-  Plus,
+  LayoutGrid,
   type LucideIcon,
 } from "lucide-react";
 import { hotelHref } from "@/lib/hotel/href";
@@ -191,7 +191,7 @@ export function AppShell({
                   onClick={() => setSwitchOpen(false)}
                   className="flex items-center gap-2 rounded-sm px-2 py-2 text-sm text-fg-muted hover:bg-bg-subtle hover:text-fg"
                 >
-                  <Plus size={15} /> สร้าง / จัดการโรงแรม
+                  <LayoutGrid size={15} /> กลับไปหน้าเลือกโรงแรม
                 </Link>
               </div>
             </Popover>

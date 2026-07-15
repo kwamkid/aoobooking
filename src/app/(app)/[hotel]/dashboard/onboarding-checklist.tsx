@@ -25,11 +25,11 @@ export function OnboardingChecklist({
         <div className="flex items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold text-fg">เริ่มต้นใช้งาน</h2>
-            <p className="mt-0.5 text-sm text-fg-muted">
+            <p className="mt-0.5 text-base text-fg-muted">
               ตั้งค่าไม่กี่ขั้นตอน แล้วเริ่มรับจองได้เลย
             </p>
           </div>
-          <span className="shrink-0 text-sm font-medium text-fg-muted">
+          <span className="shrink-0 text-base font-medium text-fg-muted">
             {requiredDone}/{requiredTotal}
           </span>
         </div>
@@ -56,7 +56,7 @@ export function OnboardingChecklist({
               >
                 {/* status dot */}
                 <span
-                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-base font-semibold ${
                     step.done
                       ? "bg-brand text-brand-fg"
                       : isNext
@@ -70,20 +70,20 @@ export function OnboardingChecklist({
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-2">
                     <span
-                      className={`text-sm font-medium ${
+                      className={`text-base font-medium ${
                         step.done ? "text-fg-muted line-through" : "text-fg"
                       }`}
                     >
                       {step.title}
                     </span>
                     {step.optional && (
-                      <span className="rounded-sm bg-bg-subtle px-1.5 py-0.5 text-xs text-fg-subtle">
+                      <span className="rounded-sm bg-bg-subtle px-1.5 py-0.5 text-sm text-fg-subtle">
                         ไม่บังคับ
                       </span>
                     )}
                   </span>
                   {!step.done && (
-                    <span className="mt-0.5 block text-xs text-fg-muted">
+                    <span className="mt-0.5 block text-sm text-fg-muted">
                       {step.description}
                     </span>
                   )}
