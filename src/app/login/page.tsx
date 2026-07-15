@@ -24,14 +24,10 @@ export default async function LoginPage() {
 
         <div className="relative z-10 flex flex-col justify-center px-12 text-brand-fg xl:px-20">
           <div className="mb-8 flex items-center gap-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/aoobooking-logo.svg"
-              alt="AooBooking"
-              width={48}
-              height={48}
-              className="h-12 w-12 brightness-0 invert"
-            />
+            <span className="flex h-12 w-12 items-center justify-center rounded-(--radius) bg-white p-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/aoobooking-logo.svg" alt="" width={32} height={32} className="h-8 w-8" />
+            </span>
             <span className="text-2xl font-bold">AooBooking</span>
           </div>
 
