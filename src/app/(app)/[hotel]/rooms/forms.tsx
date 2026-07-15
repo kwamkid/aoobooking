@@ -107,13 +107,45 @@ function RoomTypeModal({
         <div>
           <p className="mb-1.5 text-base font-medium text-fg">จำนวนผู้เข้าพัก</p>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-            <Field label="พักปกติ (คน)">
+            <Field
+              label="พักปกติ (คน)"
+              hint={
+                <>
+                  จำนวนคนที่<strong className="text-fg">ราคารวมอยู่แล้ว</strong> — พักไม่เกินนี้
+                  จ่ายแค่ราคาห้อง
+                  <br />
+                  <br />
+                  เช่น ตั้ง 2 → พัก 2 คนจ่าย 1,000฿ · คนที่ 3 ถึงเริ่มคิดค่าเสริม
+                </>
+              }
+            >
               <Input type="number" name="base_occupancy" defaultValue={2} min={1} />
             </Field>
-            <Field label="พักได้สูงสุด (คน)">
+            <Field
+              label="พักได้สูงสุด (คน)"
+              hint={
+                <>
+                  <strong className="text-fg">เพดานคน</strong>ที่ห้องนี้รับได้ (นับผู้ใหญ่ + เด็ก)
+                  <br />
+                  <br />
+                  เกินจำนวนนี้ = จองไม่ได้เลย · ต้อง ≥ &quot;พักปกติ&quot;
+                </>
+              }
+            >
               <Input type="number" name="max_occupancy" defaultValue={2} min={1} />
             </Field>
-            <Field label="เด็กอายุไม่เกิน (ปี)">
+            <Field
+              label="เด็กอายุไม่เกิน (ปี)"
+              hint={
+                <>
+                  เกณฑ์ว่าอายุเท่าไหร่ยังนับเป็น <strong className="text-fg">&quot;เด็ก&quot;</strong>{" "}
+                  — เกินกว่านี้คิดเป็นผู้ใหญ่
+                  <br />
+                  <br />
+                  ใช้บอกลูกค้า/พนักงานตอนจอง · จะบังคับใช้อัตโนมัติเมื่อเปิดหน้าจองออนไลน์
+                </>
+              }
+            >
               <Input type="number" name="child_age_limit" defaultValue={12} min={0} />
             </Field>
           </div>
@@ -125,10 +157,38 @@ function RoomTypeModal({
             <span className="font-normal text-fg-subtle">(บาท/คน/คืน · 0 = ไม่คิด)</span>
           </p>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <Field label="ผู้ใหญ่เพิ่ม 1 คน">
+            <Field
+              label="ผู้ใหญ่เพิ่ม 1 คน"
+              hint={
+                <>
+                  คิดเฉพาะ<strong className="text-fg">คนที่เกิน &quot;พักปกติ&quot;</strong>{" "}
+                  คิดต่อคนต่อคืน
+                  <br />
+                  <br />
+                  ห้อง 1,000฿ · พักปกติ 2 · ค่าเสริม 500฿
+                  <br />
+                  → 3 ผู้ใหญ่ = 1,000 + 500 = <strong className="text-fg">1,500฿/คืน</strong>
+                </>
+              }
+            >
               <Input type="number" name="extra_adult" defaultValue={0} min={0} />
             </Field>
-            <Field label="เด็กเพิ่ม 1 คน">
+            <Field
+              label="เด็กเพิ่ม 1 คน"
+              hint={
+                <>
+                  เด็ก<strong className="text-fg">นับรวมกับผู้ใหญ่</strong> —
+                  คิดเฉพาะคนที่ทำให้เกิน &quot;พักปกติ&quot;
+                  <br />
+                  <br />
+                  พักปกติ 2 · เด็กเสริม 300฿
+                  <br />
+                  → 1 ผู้ใหญ่ + 1 เด็ก (รวม 2) = <strong className="text-fg">ไม่คิดเพิ่ม</strong>
+                  <br />
+                  → 2 ผู้ใหญ่ + 1 เด็ก (รวม 3) = <strong className="text-fg">+300฿</strong>
+                </>
+              }
+            >
               <Input type="number" name="extra_child" defaultValue={0} min={0} />
             </Field>
           </div>

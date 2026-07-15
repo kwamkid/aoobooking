@@ -5,6 +5,7 @@ export { Card } from "./card";
 export { Field, Input, Textarea } from "./input";
 export { Select, type SelectOption } from "./select";
 export { Popover, type PopoverProps } from "./popover";
+export { HintIcon } from "./tooltip";
 export { SearchBox } from "./search-box";
 export { Badge, BOOKING_STATUS_TONE } from "./badge";
 export { PageHeader } from "./page-header";
