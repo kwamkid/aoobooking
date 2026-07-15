@@ -53,5 +53,10 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  // ⚠️ ต้องยกเว้นไฟล์ static ใน public/ ด้วย — ไม่งั้น proxy จับ /logo.svg แล้ว redirect
+  //    ไป /login = รูปไม่ขึ้นทั้งเว็บ (เคยพลาดมาแล้ว — ดู bugs.md)
+  //    รูปแบบ: path ที่ลงท้ายด้วยนามสกุลไฟล์ static → ข้าม middleware
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml|woff2?)$).*)",
+  ],
 };
