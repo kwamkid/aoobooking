@@ -1,35 +1,36 @@
 import { requireSuperAdmin } from "@/lib/auth";
-import Link from "next/link";
-import { Badge } from "@/components/ui";
+import { createClient } from "@/lib/supabase/server";
+import { SuperAdminShell } from "./super-admin-shell";
 
+export const metadata = { title: "Super Admin — AooBooking" };
+
+// `.super-admin` scope accent แดงอิฐเฉพาะ subtree นี้ (globals.css) —
+// รู้ทันทีว่าอยู่โซน platform ไม่ใช่หลังบ้านโรงแรม
 export default async function SuperAdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  await requireSuperAdmin();
+  const user = await requireSuperAdmin();
+
+  const supabase = await createClient();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name, email")
+    .eq("id", user.id)
+    .maybeSingle();
+  const p = profile as { full_name: string | null; email: string | null } | null;
 
   return (
-    <div className="super-admin min-h-screen bg-bg">
-      <header className="border-b border-border bg-bg-elevated px-6 py-3">
-        <div className="flex items-center gap-6">
-          <span className="inline-flex items-center gap-2 font-bold text-fg">
-            AooBooking <Badge tone="danger">Super Admin</Badge>
-          </span>
-          <nav className="flex gap-4 text-sm text-fg-muted">
-            <Link href="/super-admin/dashboard" className="hover:text-fg">
-              ภาพรวม
-            </Link>
-            <Link href="/super-admin/hotels" className="hover:text-fg">
-              โรงแรม
-            </Link>
-            <Link href="/super-admin/packages" className="hover:text-fg">
-              แพ็กเกจ
-            </Link>
-          </nav>
-        </div>
-      </header>
-      <main>{children}</main>
+    <div className="super-admin">
+      <SuperAdminShell
+        user={{
+          name: p?.full_name ?? "",
+          email: p?.email ?? user.email ?? "",
+        }}
+      >
+        {children}
+      </SuperAdminShell>
     </div>
   );
 }

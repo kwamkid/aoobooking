@@ -323,4 +323,17 @@ select.field {
 .modal-panel { animation: modal-pop-in 0.15s ease-out; }
 
 
+
+/* --- super-admin zone — accent แดงอิฐ (แยกจาก brand ปกติ ให้รู้ว่าอยู่โซน platform) ---
+   layout ห่อด้วย .super-admin → token --brand ใน subtree เปลี่ยนเอง ไม่ต้องแก้ component */
+.super-admin {
+  --brand: #b3402f;
+  --brand-soft: #f7e3df;
+  --shadow-brand: 0 4px 12px color-mix(in srgb, var(--brand) 30%, transparent);
+}
+[data-theme="dark"] .super-admin,
+.super-admin[data-theme="dark"] {
+  --brand-soft: #3d1f1a;
+}
+
 } /* end @layer components */
