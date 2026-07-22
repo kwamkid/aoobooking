@@ -22,6 +22,7 @@ type PackageRow = {
   allow_dynamic_pricing: boolean;
   allow_advanced_reports: boolean;
   allow_custom_domain: boolean;
+  allow_monthly_rental: boolean;
   remove_branding: boolean;
 };
 type OverrideRow = {
@@ -34,6 +35,7 @@ type OverrideRow = {
   allow_dynamic_pricing_override: boolean | null;
   allow_advanced_reports_override: boolean | null;
   allow_custom_domain_override: boolean | null;
+  allow_monthly_rental_override: boolean | null;
   remove_branding_override: boolean | null;
   expires_at: string | null;
 };
@@ -53,6 +55,8 @@ export type EffectiveAccess = {
   allowDynamicPricing: boolean;
   allowAdvancedReports: boolean;
   allowCustomDomain: boolean;
+  /** โมดูลเสริม: เช่ารายเดือน (เจ้าของสั่ง 2026-07-17) */
+  allowMonthlyRental: boolean;
   removeBranding: boolean;
 };
 
@@ -95,6 +99,7 @@ export const resolveAccess = cache(async (hotelId: string): Promise<EffectiveAcc
       allowDynamicPricing: false,
       allowAdvancedReports: false,
       allowCustomDomain: false,
+      allowMonthlyRental: false,
       removeBranding: false,
     };
   }
@@ -105,7 +110,7 @@ export const resolveAccess = cache(async (hotelId: string): Promise<EffectiveAcc
       .select(
         "id, slug, name, max_properties, max_rooms, max_team_members, max_ota_channels, " +
           "allow_booking_engine, allow_channel_manager, allow_dynamic_pricing, " +
-          "allow_advanced_reports, allow_custom_domain, remove_branding",
+          "allow_advanced_reports, allow_custom_domain, allow_monthly_rental, remove_branding",
       )
       .eq("id", packageId)
       .single(),
@@ -154,6 +159,10 @@ export const resolveAccess = cache(async (hotelId: string): Promise<EffectiveAcc
     allowCustomDomain: coalesceBool(
       activeOv?.allow_custom_domain_override,
       pkg.allow_custom_domain,
+    ),
+    allowMonthlyRental: coalesceBool(
+      activeOv?.allow_monthly_rental_override,
+      pkg.allow_monthly_rental,
     ),
     removeBranding: coalesceBool(activeOv?.remove_branding_override, pkg.remove_branding),
   };

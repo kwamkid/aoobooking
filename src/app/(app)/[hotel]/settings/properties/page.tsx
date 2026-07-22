@@ -2,7 +2,7 @@ import { requireHotelMember } from "@/lib/auth";
 import { can } from "@/lib/permission";
 import { resolveAccess } from "@/lib/package/resolve-access";
 import { createClient } from "@/lib/supabase/server";
-import { Card, Button, EmptyState, DeleteButton, PageHeader } from "@/components/ui";
+import { AppPage, Card, Button, EmptyState, DeleteButton, PageHeader } from "@/components/ui";
 import { PropertyForm } from "./property-form";
 import { deleteProperty, toggleMultiProperty } from "./actions";
 
@@ -18,6 +18,9 @@ type Property = {
   vat_percent: number;
   service_charge_percent: number;
   tax_inclusive: boolean;
+  monthly_deposit_months: number;
+  water_unit_satang: number;
+  electric_unit_satang: number;
 };
 
 export default async function PropertiesPage({
@@ -35,7 +38,7 @@ export default async function PropertiesPage({
     .from("properties")
     .select(
       "id, slug, name, address, phone, timezone, check_in_time, check_out_time, " +
-        "vat_percent, service_charge_percent, tax_inclusive",
+        "vat_percent, service_charge_percent, tax_inclusive, monthly_deposit_months, water_unit_satang, electric_unit_satang",
     )
     .eq("hotel_id", hotel.id)
     .is("deleted_at", null)
@@ -48,8 +51,7 @@ export default async function PropertiesPage({
   // ── โหมดสาขาเดียว: โชว์ตั้งค่าโรงแรม (สาขาหลัก) ตรงๆ + ปุ่มเปิดหลายสาขา ──
   if (!multi) {
     return (
-      <div className="p-4 sm:p-8">
-        <PageHeader title="ตั้งค่าโรงแรม" subtitle={hotel.name} />
+      <AppPage title="ตั้งค่าโรงแรม" subtitle={hotel.name}>
         {main ? (
           <Card>
             {canEdit ? (
@@ -77,7 +79,7 @@ export default async function PropertiesPage({
             </form>
           </Card>
         )}
-      </div>
+      </AppPage>
     );
   }
 
@@ -86,13 +88,11 @@ export default async function PropertiesPage({
     access.maxProperties !== null && properties.length >= access.maxProperties;
 
   return (
-    <div className="p-4 sm:p-8">
-      <PageHeader
+    <AppPage
         title="สาขา"
         subtitle={`${hotel.name} · ${properties.length}${
           access.maxProperties !== null ? `/${access.maxProperties}` : ""
-        } สาขา`}
-      />
+        } สาขา`}>
 
       <ul className="space-y-3">
         {properties.map((p) => (
@@ -138,7 +138,7 @@ export default async function PropertiesPage({
         <div className="mt-8 border-t border-border pt-6">
           <h2 className="mb-3 text-lg font-semibold text-fg">เพิ่มสาขาใหม่</h2>
           {atLimit ? (
-            <p className="rounded-lg bg-warning-soft p-4 text-sm text-warning">
+            <p className="rounded-lg bg-warning-soft p-4 text-sm text-warning-strong">
               ถึงขีดจำกัดสาขาของแพ็กเกจ {access.packageName} แล้ว — อัพเกรดเพื่อเพิ่มสาขา
             </p>
           ) : (
@@ -157,6 +157,6 @@ export default async function PropertiesPage({
           )}
         </div>
       )}
-    </div>
+    </AppPage>
   );
 }

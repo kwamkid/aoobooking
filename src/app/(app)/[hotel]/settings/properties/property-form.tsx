@@ -2,6 +2,7 @@
 
 import { Field, Input, Button, useToast } from "@/components/ui";
 import { createProperty, updateProperty } from "./actions";
+import { isNextControlFlowError } from "@/lib/next-error";
 
 type Property = {
   id: string;
@@ -14,6 +15,9 @@ type Property = {
   check_out_time: string;
   vat_percent: number;
   service_charge_percent: number;
+  monthly_deposit_months: number;
+  water_unit_satang: number;
+  electric_unit_satang: number;
   tax_inclusive: boolean;
 };
 
@@ -33,6 +37,7 @@ export function PropertyForm({
       else await createProperty(fd);
       toast.ok(isEdit ? "บันทึกสาขาแล้ว" : "เพิ่มสาขาแล้ว");
     } catch (e) {
+      if (isNextControlFlowError(e)) throw e; // ปล่อย redirect/notFound ให้ Next
       toast.err(e instanceof Error ? e.message : "เกิดข้อผิดพลาด");
     }
   }
@@ -87,6 +92,37 @@ export function PropertyForm({
           step="0.01"
           name="service_charge_percent"
           defaultValue={property?.service_charge_percent ?? 0}
+        />
+      </Field>
+
+      {/* โมดูลเช่ารายเดือน — default ตอนสร้างสัญญา + ใช้ออกบิล (M3) */}
+      <Field
+        label="มัดจำเช่ารายเดือน (เดือน)"
+        hint={<>จำนวนเดือนของค่าเช่าที่เก็บเป็นเงินประกันตอนทำสัญญา — คืนตอนย้ายออก</>}
+      >
+        <Input
+          type="number"
+          min={0}
+          name="monthly_deposit_months"
+          defaultValue={property?.monthly_deposit_months ?? 1}
+        />
+      </Field>
+      <Field label="ค่าน้ำ (บาท/หน่วย)" hint={<>ใช้คำนวณบิลผู้เช่ารายเดือนตามมิเตอร์</>}>
+        <Input
+          type="number"
+          step="0.01"
+          min={0}
+          name="water_unit"
+          defaultValue={property ? property.water_unit_satang / 100 : 0}
+        />
+      </Field>
+      <Field label="ค่าไฟ (บาท/หน่วย)" hint={<>ใช้คำนวณบิลผู้เช่ารายเดือนตามมิเตอร์</>}>
+        <Input
+          type="number"
+          step="0.01"
+          min={0}
+          name="electric_unit"
+          defaultValue={property ? property.electric_unit_satang / 100 : 0}
         />
       </Field>
 

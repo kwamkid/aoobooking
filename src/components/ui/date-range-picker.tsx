@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, X } from "lucide-react";
 
 /**
  * `<DateRangePicker>` — ปฏิทินเลือกวัน/ช่วงวัน แบบ hand-rolled (ไม่มี lib)
@@ -17,7 +17,7 @@ import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
  *   คลิกวันที่สอง (ไฮไลต์ช่วงตาม hover ก่อน commit) แล้วปิดเอง
  * - `mode="single"` → value เป็น "YYYY-MM-DD" เดี่ยว
  * - จอกว้าง (≥640px) โชว์ 2 เดือนคู่ · จอเล็กโชว์เดือนเดียว (‹ › เลื่อนเดือน)
- * - preset เร็ว: วันนี้ / 7 วันล่าสุด / 30 วันล่าสุด / เดือนนี้
+ * - preset เร็ว: วันนี้ / พรุ่งนี้ / 7 วันล่าสุด / 30 วันล่าสุด / เดือนนี้ (+ตลอดเวลา เมื่อ clearable)
  * - `minDate`/`maxDate` เป็น "YYYY-MM-DD" — วันนอกช่วงกดไม่ได้
  * - trigger ใช้ class `field` (สูง 40px เท่า input อื่น) · แสดงผลไทย (th-TH)
  *
@@ -27,6 +27,9 @@ import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 export type DateRange = { from: string; to: string };
 
 interface CommonProps {
+  /** โชว์ปุ่ม × ล้างค่า + preset "ตลอดเวลา" (range) — ต้องส่ง onClear คู่กัน */
+  clearable?: boolean;
+  onClear?: () => void;
   /** วันแรกที่เลือกได้ ("YYYY-MM-DD") */
   minDate?: string;
   /** วันสุดท้ายที่เลือกได้ ("YYYY-MM-DD") */
@@ -53,7 +56,7 @@ export type DateRangePickerProps =
   | DateRangePickerSingleProps;
 
 export function DateRangePicker(props: DateRangePickerProps) {
-  const { mode, minDate, maxDate, disabled, placeholder, className } = props;
+  const { mode, minDate, maxDate, disabled, placeholder, className, clearable, onClear } = props;
 
   const [open, setOpen] = useState(false);
   // "วันนี้" เก็บใน state และ set ตอนเปิด popover เท่านั้น — ตัว trigger render
@@ -203,11 +206,16 @@ export function DateRangePicker(props: DateRangePickerProps) {
   const previewEnd = end ?? hoveredEnd;
 
   // --- trigger label -------------------------------------------------------
+  // dd/mm/yyyy — สั้น เห็นเต็มสองฝั่งไม่โดน truncate (เจ้าของขอ 2026-07-17)
+  const fmtSlash = (iso: string) => {
+    const [y, m, d] = iso.split("-");
+    return `${d}/${m}/${y}`;
+  };
   let label: string;
   if (mode === "range" && props.value) {
-    label = `${formatThaiDate(props.value.from)} – ${formatThaiDate(props.value.to)}`;
+    label = `${fmtSlash(props.value.from)} – ${fmtSlash(props.value.to)}`;
   } else if (mode === "single" && props.value) {
-    label = formatThaiDate(props.value);
+    label = fmtSlash(props.value);
   } else {
     label = placeholder ?? (mode === "range" ? "เลือกช่วงวันที่" : "เลือกวันที่");
   }
@@ -233,6 +241,28 @@ export function DateRangePicker(props: DateRangePickerProps) {
         <span className={cx("flex-1 truncate", !hasValue && "text-fg-subtle")}>
           {label}
         </span>
+        {clearable && hasValue && (
+          <span
+            role="button"
+            tabIndex={0}
+            aria-label="ล้างวันที่"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClear?.();
+              close();
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.stopPropagation();
+                onClear?.();
+                close();
+              }
+            }}
+            className="-mr-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-fg-subtle hover:bg-bg-subtle hover:text-fg"
+          >
+            <X size={13} />
+          </span>
+        )}
       </button>
 
       {open &&
@@ -259,6 +289,12 @@ export function DateRangePicker(props: DateRangePickerProps) {
               {mode === "range" && (
                 <>
                   <PresetButton
+                    label="พรุ่งนี้"
+                    onClick={() =>
+                      applyPreset(addDays(presetToday, 1), addDays(presetToday, 1))
+                    }
+                  />
+                  <PresetButton
                     label="7 วันล่าสุด"
                     onClick={() => applyPreset(addDays(presetToday, -6), presetToday)}
                   />
@@ -272,6 +308,15 @@ export function DateRangePicker(props: DateRangePickerProps) {
                       applyPreset(startOfMonth(presetToday), endOfMonth(presetToday))
                     }
                   />
+                  {clearable && (
+                    <PresetButton
+                      label="ตลอดเวลา"
+                      onClick={() => {
+                        onClear?.();
+                        close();
+                      }}
+                    />
+                  )}
                 </>
               )}
             </div>

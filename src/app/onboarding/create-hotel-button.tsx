@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Modal, Field, Input, Button, useToast } from "@/components/ui";
 import { createHotel } from "./actions";
+import { isNextControlFlowError } from "@/lib/next-error";
 
 // ปุ่มสร้างโรงแรมใหม่ → เปิด modal ฟอร์ม
 // ถ้ายังไม่มีโรงแรมเลย (hasHotels=false) เปิด modal อัตโนมัติเพื่อลื่นไหล
@@ -16,6 +17,7 @@ export function CreateHotelButton({ hasHotels }: { hasHotels: boolean }) {
     try {
       await createHotel(fd); // redirect ถ้าสำเร็จ
     } catch (e) {
+      if (isNextControlFlowError(e)) throw e; // ปล่อย redirect/notFound ให้ Next
       setPending(false);
       toast.err(e instanceof Error ? e.message : "เกิดข้อผิดพลาด");
     }

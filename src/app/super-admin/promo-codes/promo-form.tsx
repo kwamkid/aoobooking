@@ -15,6 +15,7 @@ import {
   type DataTableColumn,
 } from "@/components/ui";
 import { createPromoCode, togglePromoCode } from "./actions";
+import { isNextControlFlowError } from "@/lib/next-error";
 
 /* ============================================================================
  *  PromoForm — ปุ่ม "สร้างโค้ด" + modal ฟอร์ม
@@ -72,6 +73,7 @@ export function PromoForm({ packages }: { packages: SelectOption[] }) {
         toast.ok("สร้างโค้ดแล้ว");
         close();
       } catch (e) {
+        if (isNextControlFlowError(e)) throw e; // ปล่อย redirect/notFound ให้ Next
         toast.err(e instanceof Error ? e.message : "สร้างโค้ดไม่สำเร็จ");
       }
     });
@@ -265,6 +267,7 @@ export function TogglePromoButton({
         await togglePromoCode(id, !isActive);
         toast.ok(isActive ? "ปิดโค้ดแล้ว" : "เปิดโค้ดแล้ว");
       } catch (e) {
+        if (isNextControlFlowError(e)) throw e; // ปล่อย redirect/notFound ให้ Next
         toast.err(e instanceof Error ? e.message : "เปลี่ยนสถานะไม่สำเร็จ");
       }
     });

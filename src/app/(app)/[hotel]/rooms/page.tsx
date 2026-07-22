@@ -1,11 +1,18 @@
-import Link from "next/link";
 import { requireHotelMember } from "@/lib/auth";
 import { can } from "@/lib/permission";
 import { hotelHref } from "@/lib/hotel/href";
 import { createClient } from "@/lib/supabase/server";
-import { PageHeader, Card, EmptyState } from "@/components/ui";
-import { RoomTypeModalButton, RoomModalButton } from "./forms";
-import { deleteRoom } from "./actions";
+import { Users, BedDouble, Layers, ChevronRight } from "lucide-react";
+import { AppPage, PropertyTabs, Card, EmptyState, ButtonLink } from "@/components/ui";
+import {
+  RoomTypeModalButton,
+  RoomTypeEditButton,
+  RoomModalButton,
+  RoomChips,
+} from "./forms";
+
+// หน้าห้องพัก — โครงตาม template AppPage (rules.md #17.1)
+// การ์ดต่อประเภทห้อง: หัว (ชื่อ + occupancy + ค่าเสริม) · ห้องเป็น chip ลบได้ (มี confirm)
 
 type Prop = { id: string; name: string; slug: string };
 type RoomType = {
@@ -15,8 +22,14 @@ type RoomType = {
   max_occupancy: number;
   extra_adult_satang: number;
   extra_child_satang: number;
+  child_age_limit: number;
+  monthly_rent_satang: number | null;
 };
 type Room = { id: string; room_number: string; floor: string | null; room_type_id: string };
+
+function baht(satang: number): string {
+  return (satang / 100).toLocaleString("th-TH");
+}
 
 export default async function RoomsPage({
   params,
@@ -38,36 +51,22 @@ export default async function RoomsPage({
     .is("deleted_at", null)
     .order("created_at");
   const properties = (propsData ?? []) as unknown as Prop[];
+  const activeProp = properties.find((x) => x.id === p) ?? properties[0];
 
-  if (properties.length === 0) {
+  if (!activeProp) {
     return (
-      <div className="p-4 sm:p-8">
-        <PageHeader title="ห้องพัก" subtitle={hotel.name} />
-        <EmptyState
-          art="bed"
-          title="ยังไม่มีสาขา"
-          description={
-            <>
-              เพิ่มสาขาก่อนจึงจะจัดการห้องพักได้{" "}
-              <Link
-                href={hotelHref("/settings/properties", hotel.slug)}
-                className="text-brand underline"
-              >
-                เพิ่มสาขา
-              </Link>
-            </>
-          }
-        />
-      </div>
+      <AppPage title="ห้องพัก" subtitle={hotel.name}>
+        <EmptyState art="bed" title="กำลังเตรียมข้อมูลโรงแรม…" />
+      </AppPage>
     );
   }
-
-  const activeProp = properties.find((x) => x.id === p) ?? properties[0];
 
   const [{ data: rtData }, { data: roomData }] = await Promise.all([
     supabase
       .from("room_types")
-      .select("id, name, base_occupancy, max_occupancy, extra_adult_satang, extra_child_satang")
+      .select(
+        "id, name, base_occupancy, max_occupancy, extra_adult_satang, extra_child_satang, child_age_limit, monthly_rent_satang",
+      )
       .eq("property_id", activeProp.id)
       .is("deleted_at", null)
       .order("sort_order"),
@@ -82,109 +81,144 @@ export default async function RoomsPage({
   const rooms = (roomData ?? []) as unknown as Room[];
 
   return (
-    <div className="p-4 sm:p-8">
-      <PageHeader
-        title="ห้องพัก"
-        subtitle={hotel.name}
-        action={
-          canEdit && roomTypes.length > 0 ? (
-            <RoomTypeModalButton hotelSlug={hotel.slug} propertyId={activeProp.id} />
-          ) : null
-        }
-      />
-
-      {/* property switcher — โชว์เฉพาะโรงแรมหลายสาขา */}
-      {hotel.multi_property && (
-        <div className="flex flex-wrap gap-2">
-          {properties.map((pr) => (
-            <Link
-              key={pr.id}
-              href={`${hotelHref("/rooms", hotel.slug)}?p=${pr.id}`}
-              className={`rounded-full px-3 py-1 text-sm ${
-                pr.id === activeProp.id
-                  ? "bg-brand text-brand-fg"
-                  : "border border-border text-fg-muted"
-              }`}
-            >
-              {pr.name}
-            </Link>
-          ))}
-        </div>
-      )}
-
-      {/* room types */}
-      <section className="mt-8">
-        {roomTypes.length === 0 ? (
-          <EmptyState
-            art="bed"
-            title="ยังไม่มีประเภทห้อง"
-            description="เริ่มจากสร้างประเภทห้อง (เช่น Deluxe, Superior) แล้วค่อยเพิ่มห้องจริงเข้าไปในแต่ละประเภท"
-            action={
-              canEdit ? (
-                <RoomTypeModalButton hotelSlug={hotel.slug} propertyId={activeProp.id} />
-              ) : undefined
-            }
-          />
-        ) : (
-          <h2 className="mb-3 text-lg font-semibold text-fg">ประเภทห้อง</h2>
-        )}
-        <div className="space-y-4">
+    <AppPage
+      title="ห้องพัก"
+      subtitle={
+        roomTypes.length > 0
+          ? `${hotel.name} · ${roomTypes.length} ประเภทห้อง · ${rooms.length} ห้อง`
+          : hotel.name
+      }
+      action={
+        canEdit && roomTypes.length > 0 ? (
+          <RoomTypeModalButton hotelSlug={hotel.slug} propertyId={activeProp.id} />
+        ) : null
+      }
+      tabs={
+        <PropertyTabs
+          show={hotel.multi_property}
+          activeId={activeProp.id}
+          items={properties.map((pr) => ({
+            id: pr.id,
+            name: pr.name,
+            href: `${hotelHref("/rooms", hotel.slug)}?p=${pr.id}`,
+          }))}
+        />
+      }
+    >
+      {roomTypes.length === 0 ? (
+        <EmptyState
+          art="bed"
+          title="ยังไม่มีประเภทห้อง"
+          description="เริ่มจากสร้างประเภทห้อง (เช่น Deluxe, Superior) แล้วค่อยเพิ่มห้องจริงเข้าไปในแต่ละประเภท"
+          action={
+            canEdit ? (
+              <RoomTypeModalButton hotelSlug={hotel.slug} propertyId={activeProp.id} />
+            ) : undefined
+          }
+        />
+      ) : (
+        <div className="space-y-3">
           {roomTypes.map((rt) => {
             const typeRooms = rooms.filter((r) => r.room_type_id === rt.id);
+            const floors = [
+              ...new Set(typeRooms.map((r) => r.floor?.trim()).filter(Boolean)),
+            ] as string[];
             return (
-              <Card key={rt.id}>
-                <div className="flex items-baseline justify-between">
-                  <div>
-                    <span className="text-base font-medium text-fg">{rt.name}</span>
-                    <span className="ml-2 text-sm text-fg-muted">
-                      พัก {rt.base_occupancy}–{rt.max_occupancy} คน · ผู้ใหญ่เพิ่ม{" "}
-                      {(rt.extra_adult_satang / 100).toLocaleString()}฿
-                    </span>
-                  </div>
-                  <span className="text-sm text-fg-subtle">{typeRooms.length} ห้อง</span>
-                </div>
+              <Card key={rt.id} pad={false}>
+                {/* พับ/กางด้วย <details> — ประเภทเยอะจะได้เห็นแถวสรุปครบก่อน กดกางเฉพาะที่สนใจ */}
+                <details className="group" open={roomTypes.length <= 2}>
+                  <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1 px-5 py-4 transition-colors hover:bg-bg-subtle [&::-webkit-details-marker]:hidden">
+                    <ChevronRight
+                      size={18}
+                      className="shrink-0 text-fg-subtle transition-transform group-open:rotate-90"
+                    />
+                    <span className="text-lg font-semibold text-fg">{rt.name}</span>
 
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  {typeRooms.length === 0 && (
-                    <span className="text-sm text-fg-subtle">
-                      ยังไม่มีห้องในประเภทนี้
-                    </span>
-                  )}
-                  {typeRooms.map((r) => (
-                    <span
-                      key={r.id}
-                      className="inline-flex items-center gap-1 rounded border border-border px-2 py-0.5 text-sm text-fg"
-                    >
-                      {r.room_number}
-                      {r.floor ? `·ชั้น${r.floor}` : ""}
+                    {/* stat อ่านปราดเดียว */}
+                    <span className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-base text-fg-muted">
+                      <span className="inline-flex items-center gap-1.5">
+                        <Users size={16} className="text-fg-subtle" />
+                        พัก {rt.base_occupancy}–{rt.max_occupancy} คน
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <BedDouble size={16} className="text-fg-subtle" />
+                        {typeRooms.length} ห้อง
+                      </span>
+                      {floors.length > 0 && (
+                        <span className="inline-flex items-center gap-1.5">
+                          <Layers size={16} className="text-fg-subtle" />
+                          {floors.length === 1 ? `ชั้น ${floors[0]}` : `${floors.length} ชั้น`}
+                        </span>
+                      )}
+                      {/* ปุ่มแก้ไขอยู่ท้าย title (เจ้าของหาไม่เจอตอนอยู่ในส่วนกาง) */}
                       {canEdit && (
-                        <form action={deleteRoom} className="inline">
-                          <input type="hidden" name="hotelSlug" value={hotel.slug} />
-                          <input type="hidden" name="roomId" value={r.id} />
-                          <button className="ml-1 text-danger" title="ลบห้อง">
-                            ×
-                          </button>
-                        </form>
+                        <RoomTypeEditButton
+                          hotelSlug={hotel.slug}
+                          propertyId={activeProp.id}
+                          roomType={rt}
+                        />
                       )}
                     </span>
-                  ))}
-                </div>
+                  </summary>
 
-                {canEdit && (
-                  <div className="mt-3">
-                    <RoomModalButton
+                  <div className="space-y-3 border-t border-border px-5 py-4">
+                    <RoomChips
                       hotelSlug={hotel.slug}
-                      propertyId={activeProp.id}
-                      roomTypeId={rt.id}
-                      roomTypeName={rt.name}
+                      rooms={typeRooms.map((r) => ({
+                        id: r.id,
+                        room_number: r.room_number,
+                        floor: r.floor,
+                      }))}
+                      canEdit={canEdit}
                     />
+
+                    {(rt.extra_adult_satang > 0 || rt.extra_child_satang > 0) && (
+                      <p className="text-sm text-fg-subtle">
+                        ค่าเสริมเมื่อพักเกิน {rt.base_occupancy} คน:
+                        {rt.extra_adult_satang > 0 &&
+                          ` ผู้ใหญ่ ${baht(rt.extra_adult_satang)}฿`}
+                        {rt.extra_adult_satang > 0 && rt.extra_child_satang > 0 && " ·"}
+                        {rt.extra_child_satang > 0 &&
+                          ` เด็ก ${baht(rt.extra_child_satang)}฿`}
+                        {" /คน/คืน"}
+                      </p>
+                    )}
+
+                    {canEdit && (
+                      <div className="flex items-center gap-1.5 border-t border-border pt-3">
+                        <RoomModalButton
+                          hotelSlug={hotel.slug}
+                          propertyId={activeProp.id}
+                          roomTypeId={rt.id}
+                          roomTypeName={rt.name}
+                          existingNumbers={rooms.map((r) => r.room_number)}
+                        />
+                      </div>
+                    )}
                   </div>
-                )}
+                </details>
               </Card>
             );
           })}
         </div>
-      </section>
-    </div>
+      )}
+
+      {/* ขั้นถัดไป: ตั้งราคา — callout เด่นๆ (ห้องเปิดจองได้เมื่อมีราคา) */}
+      {roomTypes.length > 0 && (
+        <Card className="mt-6 border-brand/30 bg-brand-soft/40">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-base font-semibold text-fg">ขั้นถัดไป — ตั้งราคาห้องพัก</p>
+              <p className="mt-0.5 text-sm text-fg-muted">
+                ห้องจะเปิดรับจองได้ก็ต่อเมื่อตั้งราคาแล้ว
+              </p>
+            </div>
+            <ButtonLink href={hotelHref("/rates", hotel.slug)} variant="primary">
+              ไปตั้งราคา →
+            </ButtonLink>
+          </div>
+        </Card>
+      )}
+    </AppPage>
   );
 }

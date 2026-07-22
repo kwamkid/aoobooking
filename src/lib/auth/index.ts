@@ -59,12 +59,23 @@ export async function requireHotelMember(slug: string | undefined) {
   const supabase = await createClient();
   const user = await requireUser();
 
-  const { data: hotel } = await supabase
-    .from("hotels")
-    .select("id, slug, name, base_currency, package_id, multi_property")
-    .eq("slug", slug)
-    .is("deleted_at", null)
-    .single();
+  const fetchHotel = () =>
+    supabase
+      .from("hotels")
+      .select("id, slug, name, base_currency, package_id, multi_property")
+      .eq("slug", slug)
+      .is("deleted_at", null)
+      .single();
+
+  let { data: hotel } = await fetchHotel();
+
+  // กัน auth refresh race: request ขนานกันแย่ง refresh token → ตัวที่แพ้ได้
+  // AuthRefreshDiscardedError ชั่วขณะ → RLS มองไม่เห็น hotel → เด้ง /onboarding
+  // ทั้งที่ session จริงยังดี (bugs.md §Auth) — ลองใหม่หนึ่งครั้งก่อนตัดสิน
+  if (!hotel) {
+    await new Promise((r) => setTimeout(r, 250));
+    ({ data: hotel } = await fetchHotel());
+  }
 
   if (!hotel) redirect("/onboarding");
 

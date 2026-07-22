@@ -1,7 +1,7 @@
 import { requireHotelMember } from "@/lib/auth";
 import { can } from "@/lib/permission";
 import { createClient } from "@/lib/supabase/server";
-import { SearchBox, EmptyState, PageHeader } from "@/components/ui";
+import { AppPage, SearchBox, EmptyState, PageHeader } from "@/components/ui";
 
 type AuditRow = {
   id: string;
@@ -31,10 +31,9 @@ export default async function AuditPage({
 
   if (!canManage) {
     return (
-      <div className="p-4 sm:p-8">
-        <PageHeader title="บันทึกกิจกรรม" subtitle={hotel.name} />
+      <AppPage title="บันทึกกิจกรรม" subtitle={hotel.name}>
         <p className="text-fg-muted">เฉพาะเจ้าของ/ผู้ดูแลเท่านั้นที่ดูบันทึกได้</p>
-      </div>
+      </AppPage>
     );
   }
 
@@ -53,8 +52,7 @@ export default async function AuditPage({
   const rows = (data ?? []) as unknown as AuditRow[];
 
   return (
-    <div className="p-4 sm:p-8">
-      <PageHeader title="บันทึกกิจกรรม" subtitle={`${hotel.name} · 100 รายการล่าสุด`} />
+    <AppPage title="บันทึกกิจกรรม" subtitle={`${hotel.name} · 100 รายการล่าสุด`}>
 
       <form className="mb-6">
         <SearchBox
@@ -88,10 +86,10 @@ export default async function AuditPage({
                     ดู diff
                   </summary>
                   <div className="mt-1 grid grid-cols-2 gap-2 text-xs">
-                    <pre className="overflow-x-auto rounded bg-danger-soft p-2 text-danger">
+                    <pre className="overflow-x-auto rounded bg-danger-soft p-2 text-danger-strong">
                       {r.old_data ? JSON.stringify(r.old_data, null, 2) : "—"}
                     </pre>
-                    <pre className="overflow-x-auto rounded bg-success-soft p-2 text-success">
+                    <pre className="overflow-x-auto rounded bg-success-soft p-2 text-success-strong">
                       {r.new_data ? JSON.stringify(r.new_data, null, 2) : "—"}
                     </pre>
                   </div>
@@ -101,6 +99,6 @@ export default async function AuditPage({
           ))}
         </ul>
       )}
-    </div>
+    </AppPage>
   );
 }

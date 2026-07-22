@@ -2,6 +2,7 @@
 
 import { Field, Input, Select, Button, useToast } from "@/components/ui";
 import { updateGuestId, eraseGuestId } from "../actions";
+import { isNextControlFlowError } from "@/lib/next-error";
 
 export function GuestIdForm({
   hotelSlug,
@@ -25,6 +26,7 @@ export function GuestIdForm({
       await updateGuestId(fd);
       toast.ok("บันทึกแล้ว");
     } catch (e) {
+      if (isNextControlFlowError(e)) throw e; // ปล่อย redirect/notFound ให้ Next
       toast.err(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ");
     }
   }
@@ -33,6 +35,7 @@ export function GuestIdForm({
       await eraseGuestId(fd);
       toast.ok("ลบข้อมูลบัตรแล้ว");
     } catch (e) {
+      if (isNextControlFlowError(e)) throw e; // ปล่อย redirect/notFound ให้ Next
       toast.err(e instanceof Error ? e.message : "ลบไม่สำเร็จ");
     }
   }

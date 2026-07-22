@@ -1,8 +1,8 @@
 # AooBooking — Hotel Booking SaaS (multi-tenant PMS + Booking Engine + Channel Manager)
 
 > ระบบจองโรงแรม + PMS หลังบ้าน แบบ multi-tenant SaaS — โรงแรมสมัครมาใช้ได้ รองรับหลายสาขา + Channel Manager ต่อ OTA (Agoda/Booking/Trip) ในอนาคต
-> **สถานะ:** Phase 0 (Foundation) — เพิ่งเริ่ม scaffold
-> **Last Updated:** 2026-07-14
+> **สถานะ:** Phase 1 (PMS Core) ใช้งานจริงบน Supabase live — booking ครบวงจร (จอง/แก้/ยกเลิก/folio/checkout) · rates (ราคาปกติ+ช่วงพิเศษ) · เช่ารายเดือน (module เสริม) · super-admin + promotion/billing
+> **Last Updated:** 2026-07-23
 
 ---
 
@@ -40,7 +40,7 @@
 | Auth | **Supabase Auth + Google OAuth เท่านั้น** | key format ใหม่ (Publishable + Secret) + JWKS local verify |
 | i18n | **next-intl** (cookie-based, ไทย+อังกฤษ) | ไม่มี locale ใน URL |
 | Billing (SaaS) | **Beam/PromptPay** + ใบกำกับภาษีไทย | renewal manual + grace + cron downgrade |
-| Package manager | **pnpm** | |
+| Package manager | **pnpm** | Node **>= 22** (engines — Node 20 ถูก Supabase deprecate) |
 | Middleware | `src/proxy.ts` (Next 16 rename, ไม่ใช่ middleware.ts) | JWT cache |
 
 **อ้างอิง pattern:** โปรเจกต์ `/Users/ampstark/aoosocial` (ยืม auth, RLS helpers, packages+overrides, superadmin, billing, client factories มาทั้งชุด)
@@ -53,21 +53,23 @@ profiles (1:1 auth.users, is_super_admin)
   └── hotels (TENANT — slug, package_id, base_currency)     ← package/billing ผูกที่นี่
         └── hotel_members (hotel_id + user_id → hotel_role)  ← M:N + role
         └── properties (สาขา — slug unique per hotel)
-              └── room_types → rooms → rate_plans → rate_calendar (inventory+price ต่อวัน)
-              └── bookings → booking_rooms / payments (ledger) / folios
+              └── room_types → rooms · room_type_inventory (จำนวน/blocked ต่อวัน)
+              └── rate_plans → rate_base_prices (ราคาปกติ) + rate_prices (override ช่วงพิเศษ)
+              └── bookings → booking_rooms / payments (ledger) / folio_items
+              └── tenancies (เช่ารายเดือน — module เสริม, block ห้องผ่าน room_blocks)
 ```
 - **Tenant isolation = Supabase RLS** (ไม่ใช่ app-layer filter) — ทุกตาราง tenant มี `hotel_id` + helper `user_role_in_hotel()` / `is_super_admin()` / `can_edit_hotel()` / `can_manage_hotel()` / `user_can(hotel_id, permission)` (SECURITY DEFINER กัน RLS recursion)
 - **Policy triplet ทุกตาราง**: member-select / capability-write / super-admin-bypass (`or is_super_admin()`)
-- **Routing**: active tenant เดินทางผ่าน query param `?h=<hotel-slug>` ผ่าน helper `hotelHref()` เดียว · slug 2 ระดับ → `/baan-suan/phuket` (booking engine หน้าบ้าน)
+- **Routing**: path-based `/[hotel]/<page>` (เช่น `/baan-suan/dashboard`) ผ่าน helper `hotelHref()` เดียว (rules #19) · slug 2 ระดับ → `/baan-suan/phuket` (booking engine หน้าบ้าน)
 - **Superadmin**: แยก route `/super-admin/*` + guard `requireSuperAdmin()` + global boolean `profiles.is_super_admin` (ตั้งผ่าน SQL เท่านั้น)
 
 **โครง folder** (ดู BLUEPRINT §10):
 ```
-src/app/(app)/          ← หลังบ้าน PMS (auth, ?h=<hotel-slug>)
+src/app/(app)/[hotel]/  ← หลังบ้าน PMS (auth, path-based) — dashboard/bookings/front-desk/rooms/rates/guests/tenants/calendar/reports/settings
 src/app/(booking)/[hotelSlug]/[[...property]]/  ← Booking Engine public
 src/app/super-admin/    ← guard requireSuperAdmin()
 src/app/auth/ login/ onboarding/ invite/[token]/
-src/lib/supabase/ · src/lib/auth/ · src/lib/hotel/href.ts · src/lib/package/resolve-access.ts
+src/lib/supabase/ · auth/ · hotel/{href,revalidate,room-numbers}.ts · package/resolve-access.ts · payment/ · permission/ · next-error.ts
 ```
 
 ## Conventions (กฎเต็มอยู่ที่ [rules.md](memo/rules.md))
@@ -75,6 +77,9 @@ src/lib/supabase/ · src/lib/auth/ · src/lib/hotel/href.ts · src/lib/package/r
 - **เงินเก็บเป็น satang (bigint) เสมอ** — ห้าม float; ทุก amount มี `currency` กำกับ + เก็บ `amount_base_satang` (แปลง base currency, freeze FX rate)
 - **RLS-first** — ทุกตาราง tenant มี `hotel_id` + RLS policy; ห้าม filter แค่ app layer
 - **สิทธิ์/เงินเช็ค 3 ชั้น** — DB (RLS `user_can()`) + app (`requirePermission()`) + UI (ซ่อน/disable ปุ่ม)
-- **inventory ต้องทำใน transaction** — ทุก action ที่แตะ `rate_calendar` ต้อง lock+transaction กัน overbooking (กันเข้ม ห้ามจองเกิน)
+- **inventory mutation ผ่าน RPC + lock ใน transaction เท่านั้น** — ทุกอย่างที่แตะ `room_type_inventory` (create_booking / change_booking / create_tenancy ฯลฯ) กัน overbooking (กันเข้ม ห้ามจองเกิน)
+- **revalidate cache ผ่าน `revalidateHotel()` เท่านั้น** — revalidatePath ตรงๆ เคยพังเงียบ 18 จุด (ลืม `/[hotel]` นำหน้า)
+- **catch ใน server action ต้องเริ่มด้วย `isNextControlFlowError()` re-throw** — กันกลืน NEXT_REDIRECT (`src/lib/next-error.ts`)
+- **module เสริมตามแพ็กเกจ**: `allow_*` บน packages + `*_override` บน hotel_package_overrides + `resolveAccess()` — gate 3 ชั้น (RPC / page / เมนู sidebar)
 - **Permission**: fixed role preset + ติ๊กได้ (`role_permissions` override) · UI "ข้างในละเอียด ข้างนอกง่าย"
 - **PDPA**: รูปบัตร/passport ใน private bucket (signed URL) + เก็บ consent timestamp

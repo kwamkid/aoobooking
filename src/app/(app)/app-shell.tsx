@@ -18,6 +18,14 @@ import {
   Menu,
   X,
   ChevronsUpDown,
+  KeyRound,
+  ArrowLeft,
+  ChevronRight,
+  Building2,
+  Package,
+  Receipt,
+  ScrollText,
+  Wallet,
   Check,
   PanelLeftClose,
   PanelLeftOpen,
@@ -31,16 +39,27 @@ import { ThemeToggle, Popover } from "@/components/ui";
 type HotelRef = { slug: string; name: string };
 
 // เมนูหลัก (ไม่รวม settings — settings fix ล่างสุดแยก)
-type NavLeaf = { key: string; label?: string; href: string; Icon: LucideIcon; iconClass?: string };
+type NavLeaf = {
+  key: string;
+  label?: string;
+  href: string;
+  Icon: LucideIcon;
+  iconClass?: string;
+  /** โชว์เฉพาะเมื่อโมดูลเสริมเปิด (จาก resolveAccess) */
+  module?: "monthlyRental";
+};
 type NavNode = NavLeaf | { section: string; key: string };
 
 const NAV: NavNode[] = [
+  // งานวันนี้ = จอประจำเคาน์เตอร์ (เข้า/ออกวันนี้) — เจ้าของขอไว้เมนูแรก (2026-07-21)
+  { key: "frontDesk", href: "/front-desk", Icon: ConciergeBell, iconClass: "text-red" },
   { key: "dashboard", href: "/dashboard", Icon: LayoutDashboard, iconClass: "text-orange" },
   { section: "งานหน้าเคาน์เตอร์", key: "sec-front" },
   { key: "calendar", href: "/calendar", Icon: CalendarDays, iconClass: "text-purple" },
   { key: "bookings", href: "/bookings", Icon: BookOpen, iconClass: "text-green" },
-  { key: "frontDesk", href: "/front-desk", Icon: ConciergeBell, iconClass: "text-red" },
   { key: "guests", href: "/guests", Icon: Users, iconClass: "text-info" },
+  // โมดูลเสริม: เช่ารายเดือน (ซ่อนถ้าแพ็กเกจไม่มี)
+  { key: "tenants", href: "/tenants", Icon: KeyRound, iconClass: "text-orange", module: "monthlyRental" },
   { section: "จัดการ", key: "sec-manage" },
   { key: "housekeeping", href: "/housekeeping", Icon: Sparkles, iconClass: "text-purple" },
   { key: "rooms", href: "/rooms", Icon: BedDouble, iconClass: "text-orange" },
@@ -48,11 +67,13 @@ const NAV: NavNode[] = [
   { key: "reports", href: "/reports", Icon: BarChart3, iconClass: "text-info" },
 ];
 
+// เมนูโหมดตั้งค่า — sidebar สลับทั้งแผงแบบ Trello/Vercel (เจ้าของขอ 2026-07-17)
 const SETTINGS_SUB: NavLeaf[] = [
-  { key: "st-hotel", label: "โรงแรม & สาขา", href: "/settings/properties", Icon: Settings },
-  { key: "st-package", label: "แพ็กเกจ", href: "/settings/package", Icon: Settings },
-  { key: "st-billing", label: "ประวัติชำระเงิน", href: "/settings/billing", Icon: Settings },
-  { key: "st-audit", label: "บันทึกกิจกรรม", href: "/settings/audit", Icon: Settings },
+  { key: "st-hotel", label: "โรงแรม & สาขา", href: "/settings/properties", Icon: Building2, iconClass: "text-orange" },
+  { key: "st-payments", label: "ช่องทางชำระเงิน", href: "/settings/payments", Icon: Wallet, iconClass: "text-yellow" },
+  { key: "st-package", label: "แพ็กเกจ", href: "/settings/package", Icon: Package, iconClass: "text-purple" },
+  { key: "st-billing", label: "ประวัติชำระเงิน", href: "/settings/billing", Icon: Receipt, iconClass: "text-green" },
+  { key: "st-audit", label: "บันทึกกิจกรรม", href: "/settings/audit", Icon: ScrollText, iconClass: "text-info" },
 ];
 
 function initialOf(name: string) {
@@ -63,11 +84,14 @@ export function AppShell({
   user,
   activeHotel,
   hotels,
+  modules,
   children,
 }: {
   user: { name: string; email: string };
   activeHotel: HotelRef;
   hotels: HotelRef[];
+  /** โมดูลเสริมที่แพ็กเกจเปิด (resolveAccess) — คุมเมนู sidebar */
+  modules: { monthlyRental: boolean };
   children: React.ReactNode;
 }) {
   const t = useTranslations("nav");
@@ -114,10 +138,8 @@ export function AppShell({
   // user dropdown popover
   const avatarRef = useRef<HTMLButtonElement>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  // settings submenu popover (แยก desktop/mobile ให้ anchor ถูกตัว)
-  const settingsRef = useRef<HTMLButtonElement>(null);
-  const settingsRefMobile = useRef<HTMLButtonElement>(null);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  // อยู่ใต้ /settings → sidebar สลับเป็นเมนูตั้งค่าทั้งแผง (มีปุ่มกลับ)
+  const inSettings = subPath.startsWith("/settings");
 
   const sidebarBody = (isMobile: boolean) => {
     const rail = !isMobile && collapsed;
@@ -198,109 +220,136 @@ export function AppShell({
           </div>
         )}
 
-        {/* ── nav ── */}
-        <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
-          {NAV.map((n) => {
-            if ("section" in n) {
-              return (
-                <div key={n.key} className="mt-4 border-t border-border pt-3 first:mt-0">
-                  {!rail && (
-                    <div className="px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-fg-subtle">
-                      {n.section}
-                    </div>
-                  )}
-                </div>
-              );
-            }
-            const active = isActive(n.href);
-            return (
-              <Link
-                key={n.key}
-                href={withHotel(n.href)}
-                title={rail ? label(n) : undefined}
-                onClick={() => setMobileOpen(false)}
-                className={`flex items-center rounded-(--radius) px-3 py-2.5 text-base font-medium transition-colors ${
-                  rail ? "justify-center" : ""
-                } ${
-                  active
-                    ? "bg-brand text-brand-fg shadow-(--shadow-brand)"
-                    : "text-fg-muted hover:bg-bg-subtle hover:text-fg"
-                }`}
-              >
-                <n.Icon
-                  size={19}
-                  className={`${rail ? "" : "mr-3"} ${active ? "text-brand-fg" : n.iconClass ?? ""}`}
-                />
-                {!rail && label(n)}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* ── settings (fix ล่างสุด — กดแล้วเปิด popover submenu) ── */}
-        <div className="border-t border-border px-3 py-2">
-          <button
-            ref={isMobile ? settingsRefMobile : settingsRef}
-            title={rail ? "ตั้งค่า" : undefined}
-            onClick={() => setSettingsOpen((v) => !v)}
-            className={`flex w-full items-center rounded-(--radius) px-3 py-2.5 text-base font-medium transition-colors ${
-              rail ? "justify-center" : "justify-between"
-            } ${
-              SETTINGS_SUB.some((s) => isActive(s.href))
-                ? "bg-brand text-brand-fg shadow-(--shadow-brand)"
-                : "text-fg-muted hover:bg-bg-subtle hover:text-fg"
+        {/* ── nav — โหมดตั้งค่าสลับทั้งแผง (แบบ Trello/Vercel)
+             2 แผงบนรางเดียว สไลด์ซ้าย-ขวาตอนเข้า/ออก /settings — แผงที่ไม่ active
+             ใส่ inert (กันกด/โฟกัส) · motion-reduce ปิด animation ── */}
+        <div className="relative flex-1 overflow-hidden">
+          <div
+            className={`flex h-full w-[200%] transition-transform duration-300 ease-out motion-reduce:transition-none ${
+              inSettings ? "-translate-x-1/2" : ""
             }`}
           >
-            <span className="flex items-center">
-              <Settings
-                size={19}
-                className={`${rail ? "" : "mr-3"} ${
-                  SETTINGS_SUB.some((s) => isActive(s.href)) ? "text-brand-fg" : ""
+            {/* แผง 1: เมนูหลัก */}
+            <nav
+              inert={inSettings}
+              aria-hidden={inSettings}
+              className="w-1/2 space-y-0.5 overflow-y-auto px-3 py-4"
+            >
+              {NAV.filter((n) => !("href" in n) || !n.module || modules[n.module]).map((n) => {
+                if ("section" in n) {
+                  return (
+                    <div key={n.key} className="mt-4 border-t border-border pt-3 first:mt-0">
+                      {!rail && (
+                        <div className="px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-fg-subtle">
+                          {n.section}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+                const active = isActive(n.href);
+                return (
+                  <Link
+                    key={n.key}
+                    href={withHotel(n.href)}
+                    title={rail ? label(n) : undefined}
+                    onClick={() => setMobileOpen(false)}
+                    className={`flex items-center rounded-(--radius) px-3 py-2.5 text-base font-medium transition-colors ${
+                      rail ? "justify-center" : ""
+                    } ${
+                      active
+                        ? "bg-brand text-brand-fg shadow-(--shadow-brand)"
+                        : "text-fg-muted hover:bg-bg-subtle hover:text-fg"
+                    }`}
+                  >
+                    <n.Icon
+                      size={19}
+                      className={`${rail ? "" : "mr-3"} ${active ? "text-brand-fg" : n.iconClass ?? ""}`}
+                    />
+                    {!rail && label(n)}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* แผง 2: เมนูตั้งค่า */}
+            <nav
+              inert={!inSettings}
+              aria-hidden={!inSettings}
+              className="w-1/2 space-y-0.5 overflow-y-auto px-3 py-4"
+            >
+              {/* กลับเมนูหลัก */}
+              <Link
+                href={withHotel("/dashboard")}
+                title={rail ? "กลับเมนูหลัก" : undefined}
+                onClick={() => setMobileOpen(false)}
+                className={`flex items-center rounded-(--radius) px-3 py-2.5 text-base font-medium text-fg-muted transition-colors hover:bg-bg-subtle hover:text-fg ${
+                  rail ? "justify-center" : ""
                 }`}
-              />
-              {!rail && "ตั้งค่า"}
-            </span>
-            {!rail && <ChevronsUpDown size={15} className="opacity-60" />}
-          </button>
+              >
+                <ArrowLeft size={19} className={rail ? "" : "mr-3"} />
+                {!rail && "กลับเมนูหลัก"}
+              </Link>
+              <div className="mt-4 border-t border-border pt-3">
+                {!rail && (
+                  <div className="px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-fg-subtle">
+                    ตั้งค่า
+                  </div>
+                )}
+              </div>
+              {SETTINGS_SUB.map((n) => {
+                const active = isActive(n.href);
+                return (
+                  <Link
+                    key={n.key}
+                    href={withHotel(n.href)}
+                    title={rail ? label(n) : undefined}
+                    onClick={() => setMobileOpen(false)}
+                    className={`flex items-center rounded-(--radius) px-3 py-2.5 text-base font-medium transition-colors ${
+                      rail ? "justify-center" : ""
+                    } ${
+                      active
+                        ? "bg-brand text-brand-fg shadow-(--shadow-brand)"
+                        : "text-fg-muted hover:bg-bg-subtle hover:text-fg"
+                    }`}
+                  >
+                    <n.Icon
+                      size={19}
+                      className={`${rail ? "" : "mr-3"} ${active ? "text-brand-fg" : n.iconClass ?? ""}`}
+                    />
+                    {!rail && label(n)}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
         </div>
+
+        {/* ── ตั้งค่า (ล่างสุด) — กดแล้ว sidebar สลับเป็นเมนูตั้งค่า ── */}
+        {!inSettings && (
+          <div className="border-t border-border px-3 py-2">
+            <Link
+              href={withHotel("/settings/properties")}
+              title={rail ? "ตั้งค่า" : undefined}
+              onClick={() => setMobileOpen(false)}
+              className={`flex w-full items-center rounded-(--radius) px-3 py-2.5 text-base font-medium text-fg-muted transition-colors hover:bg-bg-subtle hover:text-fg ${
+                rail ? "justify-center" : "justify-between"
+              }`}
+            >
+              <span className="flex items-center">
+                <Settings size={19} className={rail ? "" : "mr-3"} />
+                {!rail && "ตั้งค่า"}
+              </span>
+              {!rail && <ChevronRight size={15} className="opacity-60" />}
+            </Link>
+          </div>
+        )}
       </div>
     );
   };
 
-  // settings submenu popover — anchor ที่ปุ่มที่กำลังใช้ (mobile drawer เปิด → ปุ่มใน drawer)
-  const settingsPopover = (
-    <Popover
-      open={settingsOpen}
-      onClose={() => setSettingsOpen(false)}
-      anchor={(mobileOpen ? settingsRefMobile : settingsRef).current}
-      align="start"
-      ariaLabel="ตั้งค่า"
-    >
-      <div className="p-1">
-        {SETTINGS_SUB.map((s) => (
-          <Link
-            key={s.key}
-            href={withHotel(s.href)}
-            onClick={() => {
-              setSettingsOpen(false);
-              setMobileOpen(false);
-            }}
-            className={`block rounded-sm px-3 py-2 text-sm font-medium transition-colors ${
-              isActive(s.href)
-                ? "bg-brand-soft text-brand"
-                : "text-fg-muted hover:bg-bg-subtle hover:text-fg"
-            }`}
-          >
-            {s.label}
-          </Link>
-        ))}
-      </div>
-    </Popover>
-  );
-
   return (
     <div className="flex h-dvh overflow-hidden bg-bg">
-      {settingsPopover}
       {/* desktop sidebar */}
       <aside
         className={`hidden shrink-0 border-r border-border bg-bg-elevated transition-all duration-200 lg:block ${

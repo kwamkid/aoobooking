@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Card, Field, Input, Button, useToast } from "@/components/ui";
 import { redeemPromoCode } from "./actions";
+import { isNextControlFlowError } from "@/lib/next-error";
 
 export function RedeemForm({ hotelSlug }: { hotelSlug: string }) {
   const toast = useToast();
@@ -15,6 +16,7 @@ export function RedeemForm({ hotelSlug }: { hotelSlug: string }) {
       toast.ok(`ใช้โค้ดสำเร็จ — ฟรี ${res.free_months} เดือน ถึง ${until}`);
       setCode("");
     } catch (e) {
+      if (isNextControlFlowError(e)) throw e; // ปล่อย redirect/notFound ให้ Next
       toast.err(e instanceof Error ? e.message : "เกิดข้อผิดพลาด");
     }
   }

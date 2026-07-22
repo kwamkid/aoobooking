@@ -13,6 +13,7 @@ import {
   type DataTableColumn,
 } from "@/components/ui";
 import { updatePackage } from "./actions";
+import { isNextControlFlowError } from "@/lib/next-error";
 
 /* ============================================================================
  *  PackageTable — ตาราง 5 tiers + ปุ่มแก้รายแถว
@@ -34,6 +35,7 @@ export interface PackageRow {
   allow_dynamic_pricing: boolean;
   allow_advanced_reports: boolean;
   allow_custom_domain: boolean;
+  allow_monthly_rental: boolean;
   remove_branding: boolean;
   price_thb_monthly: number | null;
   price_thb_yearly: number | null;
@@ -65,6 +67,7 @@ const FEATURES = [
   { key: "allowDynamicPricing", label: "Dynamic Pricing (ปรับราคาอัตโนมัติ)" },
   { key: "allowAdvancedReports", label: "รายงานขั้นสูง" },
   { key: "allowCustomDomain", label: "Custom Domain" },
+  { key: "allowMonthlyRental", label: "โมดูลเช่ารายเดือน (ผู้เช่า + สัญญา)" },
   { key: "removeBranding", label: "ซ่อนแบรนด์ AooBooking" },
 ] as const;
 
@@ -93,6 +96,7 @@ function toForm(p: PackageRow): FormState {
     allowDynamicPricing: p.allow_dynamic_pricing,
     allowAdvancedReports: p.allow_advanced_reports,
     allowCustomDomain: p.allow_custom_domain,
+    allowMonthlyRental: p.allow_monthly_rental,
     removeBranding: p.remove_branding,
     isActive: p.is_active,
   };
@@ -131,12 +135,14 @@ export function PackageForm({
           allowDynamicPricing: form.allowDynamicPricing,
           allowAdvancedReports: form.allowAdvancedReports,
           allowCustomDomain: form.allowCustomDomain,
+          allowMonthlyRental: form.allowMonthlyRental,
           removeBranding: form.removeBranding,
           isActive: form.isActive,
         });
         toast.ok("บันทึกแล้ว");
         onClose();
       } catch (e) {
+        if (isNextControlFlowError(e)) throw e; // ปล่อย redirect/notFound ให้ Next
         toast.err(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ");
       }
     });
@@ -168,7 +174,7 @@ export function PackageForm({
         }}
       >
         <div className="rounded-(--radius) bg-warning-soft p-3">
-          <p className="text-sm text-warning">
+          <p className="text-sm text-warning-strong">
             ⚠️ แก้แล้วมีผลกับ<b>ทุกโรงแรมใน tier นี้ทันที</b>
           </p>
         </div>

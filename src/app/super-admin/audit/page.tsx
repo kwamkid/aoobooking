@@ -79,10 +79,10 @@ export default async function SuperAdminAuditPage({
                 <details className="mt-1">
                   <summary className="cursor-pointer text-xs text-fg-subtle">ดู diff</summary>
                   <div className="mt-1 grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
-                    <pre className="overflow-x-auto rounded bg-danger-soft p-2 text-danger">
+                    <pre className="overflow-x-auto rounded bg-danger-soft p-2 text-danger-strong">
                       {r.old_data ? JSON.stringify(r.old_data, null, 2) : "—"}
                     </pre>
-                    <pre className="overflow-x-auto rounded bg-success-soft p-2 text-success">
+                    <pre className="overflow-x-auto rounded bg-success-soft p-2 text-success-strong">
                       {r.new_data ? JSON.stringify(r.new_data, null, 2) : "—"}
                     </pre>
                   </div>

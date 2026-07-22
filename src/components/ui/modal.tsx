@@ -33,8 +33,9 @@ export interface ModalProps {
   dismissOnBackdrop?: boolean;
 }
 
+// ตัด [tabindex="-1"] ทุกชนิด — เช่นปุ่ม ⓘ HintIcon ที่ตั้งใจไม่รับ Tab
 const FOCUSABLE_SELECTOR =
-  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  'a[href]:not([tabindex="-1"]), button:not([disabled]):not([tabindex="-1"]), textarea:not([disabled]):not([tabindex="-1"]), input:not([disabled]):not([tabindex="-1"]), select:not([disabled]):not([tabindex="-1"]), [tabindex]:not([tabindex="-1"])';
 
 export function Modal({
   open,
@@ -137,7 +138,7 @@ export function Modal({
                 </h2>
               )}
               {description && (
-                <div className="mt-1 text-sm text-fg-muted">{description}</div>
+                <div className="mt-1 text-base text-fg-muted">{description}</div>
               )}
             </div>
             {!hideCloseButton && (

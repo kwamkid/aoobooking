@@ -36,6 +36,12 @@ export async function getSetupStatus(hotelId: string): Promise<SetupStatus> {
     .from("rooms")
     .select("id", { count: "exact", head: true })
     .is("deleted_at", null);
+  // ราคา = ตั้ง "ราคาปกติ" (rate_base_prices — โมเดลใหม่ 2026-07-16) หรือมี override
+  // รายวัน (rate_prices) ก็นับว่าตั้งแล้ว — เช็คทั้งคู่ กัน checklist ค้างเหมือนบั๊กเดิม
+  const basePricesQ = supabase
+    .from("rate_base_prices")
+    .select("rate_plan_id", { count: "exact", head: true })
+    .eq("hotel_id", hotelId);
   const pricesQ = supabase
     .from("rate_prices")
     .select("id", { count: "exact", head: true })
@@ -57,15 +63,16 @@ export async function getSetupStatus(hotelId: string): Promise<SetupStatus> {
     roomsQ.eq("property_id", "00000000-0000-0000-0000-000000000000");
   }
 
-  const [rooms, prices, members, bookings] = await Promise.all([
+  const [rooms, basePrices, prices, members, bookings] = await Promise.all([
     roomsQ,
+    basePricesQ,
     pricesQ,
     membersQ,
     bookingsQ,
   ]);
 
   const hasRooms = (rooms.count ?? 0) > 0;
-  const hasPrices = (prices.count ?? 0) > 0;
+  const hasPrices = (basePrices.count ?? 0) > 0 || (prices.count ?? 0) > 0;
   const hasTeam = (members.count ?? 0) > 1; // มากกว่าเจ้าของ 1 คน
   const hasBooking = (bookings.count ?? 0) > 0;
 
@@ -80,7 +87,7 @@ export async function getSetupStatus(hotelId: string): Promise<SetupStatus> {
     {
       key: "rates",
       title: "ตั้งราคา",
-      description: "สร้าง rate plan แล้วตั้งราคาต่อคืน",
+      description: "ตั้งราคาปกติของแต่ละประเภทห้อง — ครั้งเดียวจบ",
       href: "/rates",
       done: hasPrices,
     },

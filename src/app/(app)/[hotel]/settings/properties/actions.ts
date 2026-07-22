@@ -65,6 +65,9 @@ type PropInput = {
   vat_percent: number;
   service_charge_percent: number;
   tax_inclusive: boolean;
+  monthly_deposit_months: number;
+  water_unit_satang: number;
+  electric_unit_satang: number;
 };
 
 function parseForm(fd: FormData): PropInput {
@@ -78,6 +81,9 @@ function parseForm(fd: FormData): PropInput {
     check_out_time: (fd.get("check_out_time") as string) || "12:00",
     vat_percent: Number(fd.get("vat_percent") ?? 7),
     service_charge_percent: Number(fd.get("service_charge_percent") ?? 0),
+    monthly_deposit_months: Math.max(Number(fd.get("monthly_deposit_months") ?? 1), 0),
+    water_unit_satang: Math.round(Math.max(Number(fd.get("water_unit") ?? 0), 0) * 100),
+    electric_unit_satang: Math.round(Math.max(Number(fd.get("electric_unit") ?? 0), 0) * 100),
     tax_inclusive: fd.get("tax_inclusive") === "on",
   };
 }

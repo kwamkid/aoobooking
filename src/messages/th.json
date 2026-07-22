@@ -12,12 +12,13 @@
     "dashboard": "ภาพรวม",
     "calendar": "ปฏิทินห้อง",
     "bookings": "การจอง",
-    "frontDesk": "หน้าเคาน์เตอร์",
+    "frontDesk": "งานวันนี้",
     "housekeeping": "แม่บ้าน",
     "rooms": "ห้องพัก",
     "rates": "ราคา",
     "guests": "แขก",
     "reports": "รายงาน",
-    "settings": "ตั้งค่า"
+    "settings": "ตั้งค่า",
+    "tenants": "เช่ารายเดือน"
   }
 }

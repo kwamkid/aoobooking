@@ -1,8 +1,11 @@
+import Link from "next/link";
 import { requireHotelMember } from "@/lib/auth";
+import { can } from "@/lib/permission";
+import { hotelHref } from "@/lib/hotel/href";
 import { createClient } from "@/lib/supabase/server";
-import { PageHeader } from "@/components/ui";
-import { ActionButton } from "./action-button";
-import { checkInBooking, checkOutBooking } from "./actions";
+import { AppPage, PageHeader, RoomBadge } from "@/components/ui";
+import { CheckInButton } from "./checkin-button";
+import { CheckoutButton } from "./checkout-button";
 
 type Row = {
   id: string;
@@ -11,6 +14,7 @@ type Row = {
   check_in: string;
   check_out: string;
   guests: { full_name: string } | null;
+  booking_rooms?: { room: { room_number: string } | null }[];
 };
 type Balance = { booking_id: string; balance_satang: number };
 
@@ -23,27 +27,33 @@ export default async function FrontDeskPage({
   const { hotel } = await requireHotelMember(hotelSlug);
   const supabase = await createClient();
 
+  // สิทธิ์รับเงิน/ยืนยันสลิป — ใช้ใน checkout modal (เก็บเงิน & เช็คเอาท์)
+  const [canPayCharge, canPayVerify] = await Promise.all([
+    can(hotel.id, "payments.charge"),
+    can(hotel.id, "payments.verify_slip"),
+  ]);
+
   const today = new Date().toISOString().slice(0, 10);
 
   // 3 กลุ่ม: เข้าวันนี้ (confirmed, check_in=today) / ออกวันนี้ (checked_in, check_out=today) / in-house
   const [{ data: arrivals }, { data: departures }, { data: inhouse }] = await Promise.all([
     supabase
       .from("bookings")
-      .select("id, code, status, check_in, check_out, guests(full_name)")
+      .select("id, code, status, check_in, check_out, guests(full_name), booking_rooms(room:rooms(room_number))")
       .eq("hotel_id", hotel.id)
       .eq("status", "confirmed")
       .eq("check_in", today)
       .order("code"),
     supabase
       .from("bookings")
-      .select("id, code, status, check_in, check_out, guests(full_name)")
+      .select("id, code, status, check_in, check_out, guests(full_name), booking_rooms(room:rooms(room_number))")
       .eq("hotel_id", hotel.id)
       .eq("status", "checked_in")
       .eq("check_out", today)
       .order("code"),
     supabase
       .from("bookings")
-      .select("id, code, status, check_in, check_out, guests(full_name)")
+      .select("id, code, status, check_in, check_out, guests(full_name), booking_rooms(room:rooms(room_number))")
       .eq("hotel_id", hotel.id)
       .eq("status", "checked_in")
       .order("check_out"),
@@ -65,11 +75,9 @@ export default async function FrontDeskPage({
   const inhouseRows = (inhouse ?? []) as unknown as Row[];
 
   return (
-    <div className="p-4 sm:p-8">
-      <PageHeader
-        title="หน้าเคาน์เตอร์"
-        subtitle={`${hotel.name} · ${new Date(today).toLocaleDateString("th-TH")}`}
-      />
+    <AppPage
+        title="งานวันนี้"
+        subtitle={`${hotel.name} · ${new Date(today).toLocaleDateString("th-TH")}`}>
 
       {/* เข้าวันนี้ */}
       <Section title={`เข้าวันนี้ (${arrivalRows.length})`}>
@@ -77,13 +85,13 @@ export default async function FrontDeskPage({
           <Empty>ไม่มีแขกเข้าวันนี้</Empty>
         ) : (
           arrivalRows.map((b) => (
-            <RowItem key={b.id} b={b}>
-              <ActionButton
-                action={checkInBooking}
+            <RowItem key={b.id} b={b} hotelSlug={hotel.slug}>
+              {/* เช็คอิน = เลือกเบอร์ห้องก่อน (จองผูกแค่ประเภทห้อง) */}
+              <CheckInButton
                 hotelSlug={hotel.slug}
                 bookingId={b.id}
-                label="เช็คอิน"
-                variant="primary"
+                code={b.code}
+                guestName={b.guests?.full_name ?? null}
               />
             </RowItem>
           ))
@@ -98,13 +106,15 @@ export default async function FrontDeskPage({
           departureRows.map((b) => {
             const bal = balMap.get(b.id) ?? 0;
             return (
-              <RowItem key={b.id} b={b} balance={bal}>
-                <ActionButton
-                  action={checkOutBooking}
+              <RowItem key={b.id} b={b} balance={bal} hotelSlug={hotel.slug}>
+                {/* checkout modal: สรุปบิล + เก็บเงินยอดค้าง + เช็คเอาท์จบที่เดียว */}
+                <CheckoutButton
                   hotelSlug={hotel.slug}
                   bookingId={b.id}
-                  label="เช็คเอาท์"
-                  variant={bal > 0 ? "disabled-hint" : "primary"}
+                  code={b.code}
+                  guestName={b.guests?.full_name ?? null}
+                  balanceSatang={bal}
+                  perms={{ charge: canPayCharge, verify: canPayVerify }}
                 />
               </RowItem>
             );
@@ -118,11 +128,11 @@ export default async function FrontDeskPage({
           <Empty>ไม่มีแขกพักอยู่</Empty>
         ) : (
           inhouseRows.map((b) => (
-            <RowItem key={b.id} b={b} balance={balMap.get(b.id) ?? 0} />
+            <RowItem key={b.id} b={b} balance={balMap.get(b.id) ?? 0} hotelSlug={hotel.slug} />
           ))
         )}
       </Section>
-    </div>
+    </AppPage>
   );
 }
 
@@ -138,22 +148,39 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function RowItem({
   b,
   balance,
+  hotelSlug,
   children,
 }: {
   b: Row;
   balance?: number;
+  hotelSlug: string;
   children?: React.ReactNode;
 }) {
+  const roomNos = (b.booking_rooms ?? [])
+    .map((r) => r.room?.room_number)
+    .filter((n): n is string => !!n);
   return (
     <div className="flex items-center justify-between rounded-lg border border-border p-3 text-sm">
       <div>
+        {/* เบอร์ห้องเด่นสุด — front desk มองหาห้องเป็นหลัก (มีเมื่อ assign แล้ว) */}
+        {roomNos.length > 0 && (
+          <span className="mr-2">
+            <RoomBadge rooms={roomNos} size="sm" />
+          </span>
+        )}
         <span className="font-mono">{b.code}</span>
-        <span className="ml-2 font-medium">{b.guests?.full_name ?? "-"}</span>
+        {/* ชื่อแขก = ลิงก์เข้ารายละเอียดการจอง (ดู folio/รับเงิน/ประวัติ) */}
+        <Link
+          href={hotelHref(`/bookings/${b.id}`, hotelSlug)}
+          className="ml-2 font-medium underline-offset-2 hover:text-info-strong hover:underline"
+        >
+          {b.guests?.full_name ?? "-"}
+        </Link>
         <span className="ml-2 text-xs text-fg-muted">
           {b.check_in} → {b.check_out}
         </span>
         {balance != null && balance > 0 && (
-          <span className="ml-2 text-xs font-medium text-danger">
+          <span className="ml-2 text-sm font-medium text-danger-strong">
             ค้าง {(balance / 100).toLocaleString()}฿
           </span>
         )}

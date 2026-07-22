@@ -132,6 +132,27 @@ export default function DesignSystemPage() {
         </div>
       </Section>
 
+      {/* ---- Status trio: สด / soft / strong ---- */}
+      <Section title="สีสถานะ 3 ชั้น — สด (พื้น/แถบ/ไอคอน) · soft (พื้นอ่อน) · strong (ตัวหนังสือ)">
+        <p className="mb-3 text-sm text-fg-muted">
+          กฎ: ตัวหนังสือบนพื้น soft/ขาว ใช้ <code>text-*-strong</code> เสมอ — สีสดตรงๆ
+          อ่านไม่ออก (เหลืองบนเหลือง = 1.6:1)
+        </p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {(["brand", "success", "warning", "danger", "info"] as const).map((s) => (
+            <div
+              key={s}
+              className={`flex items-center gap-3 rounded-lg bg-${s}-soft px-4 py-3`}
+            >
+              <span className={`inline-block h-3 w-3 shrink-0 rounded-full bg-${s}`} />
+              <span className={`text-base font-medium text-${s}-strong`}>
+                ข้อความ {s} บนพื้น {s}-soft — อ่านชัด
+              </span>
+            </div>
+          ))}
+        </div>
+      </Section>
+
       {/* ---- Neutrals ---- */}
       <Section title="Neutral Scale">
         <div className="flex flex-wrap gap-1">

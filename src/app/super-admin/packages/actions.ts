@@ -20,6 +20,7 @@ export interface UpdatePackageInput {
   allowDynamicPricing: boolean;
   allowAdvancedReports: boolean;
   allowCustomDomain: boolean;
+  allowMonthlyRental: boolean;
   removeBranding: boolean;
   isActive: boolean;
 }
@@ -63,6 +64,7 @@ export async function updatePackage(input: UpdatePackageInput) {
     allow_dynamic_pricing: input.allowDynamicPricing,
     allow_advanced_reports: input.allowAdvancedReports,
     allow_custom_domain: input.allowCustomDomain,
+    allow_monthly_rental: input.allowMonthlyRental,
     remove_branding: input.removeBranding,
     is_active: input.isActive,
   };
@@ -73,7 +75,7 @@ export async function updatePackage(input: UpdatePackageInput) {
   const { data: before, error: readError } = await admin
     .from("packages")
     .select(
-      "slug, name, price_thb_monthly, max_properties, max_rooms, max_team_members, max_ota_channels, allow_booking_engine, allow_channel_manager, allow_dynamic_pricing, allow_advanced_reports, allow_custom_domain, remove_branding, is_active",
+      "slug, name, price_thb_monthly, max_properties, max_rooms, max_team_members, max_ota_channels, allow_booking_engine, allow_channel_manager, allow_dynamic_pricing, allow_advanced_reports, allow_custom_domain, allow_monthly_rental, remove_branding, is_active",
     )
     .eq("id", input.id)
     .single();

@@ -2,6 +2,7 @@ import { requireHotelMember } from "@/lib/auth";
 import { can } from "@/lib/permission";
 import { createClient } from "@/lib/supabase/server";
 import {
+  AppPage,
   PageHeader,
   Card,
   Field,
@@ -56,10 +57,9 @@ export default async function ReportsPage({
 
   if (!canView) {
     return (
-      <div className="p-4 sm:p-8">
-        <PageHeader title="รายงาน" subtitle={hotel.name} />
+      <AppPage title="รายงาน" subtitle={hotel.name}>
         <p className="mt-4 text-fg-muted">คุณไม่มีสิทธิ์ดูรายงาน</p>
-      </div>
+      </AppPage>
     );
   }
 
@@ -146,8 +146,7 @@ export default async function ReportsPage({
   }
 
   return (
-    <div className="p-4 sm:p-8">
-      <PageHeader title="รายงาน" subtitle={hotel.name} />
+    <AppPage title="รายงาน" subtitle={hotel.name}>
 
       <form className="mb-6 flex flex-wrap items-end gap-3">
         <Field label="ตั้งแต่">
@@ -198,7 +197,7 @@ export default async function ReportsPage({
       <p className="mt-6 text-xs text-fg-subtle">
         ยอดรับเงิน/refund คิดจาก amount_base_satang (สกุลบัญชี) · ADR/RevPAR อยู่ใน night audit (Phase 2)
       </p>
-    </div>
+    </AppPage>
   );
 }
 

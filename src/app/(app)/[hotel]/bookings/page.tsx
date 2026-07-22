@@ -1,102 +1,225 @@
+import type { Database } from "@/types/database";
+import type { FilterTabTone } from "@/components/ui";
 import { requireHotelMember } from "@/lib/auth";
 import { can } from "@/lib/permission";
 import { hotelHref } from "@/lib/hotel/href";
 import { createClient } from "@/lib/supabase/server";
 import {
-  PageHeader,
+  AppPage,
+  FilterTabs,
   ButtonLink,
-  Badge,
-  BOOKING_STATUS_TONE,
+  Card,
   EmptyState,
-  Table,
-  THead,
-  TBody,
-  TR,
-  TH,
-  TD,
+  PaginationNav,
 } from "@/components/ui";
+import { BookingsFilterBar } from "./filter-bar";
+import { BookingsTable } from "./bookings-table";
 
-type Booking = {
+/* หน้าการจอง — ข้อมูลผ่าน RPC `search_bookings` ทั้งหมด (rules #20):
+ * filter (สถานะ/ค้นหา/ช่วงวัน/ประเภทห้อง) + pagination ทำใน query เดียวที่ DB
+ * ดึงมาทีละหน้า (lazy load) · total_count จาก window function ไม่ยิงนับซ้ำ */
+
+type BookingStatus = Database["public"]["Enums"]["booking_status"];
+type Row = Database["public"]["Functions"]["search_bookings"]["Returns"][number];
+
+const PAGE_SIZE = 20;
+
+const FILTERS: {
   id: string;
-  code: string;
-  status: string;
-  check_in: string;
-  check_out: string;
-  total_satang: number;
-  guests: { full_name: string } | null;
-};
+  name: string;
+  statuses?: BookingStatus[];
+  tone: FilterTabTone;
+  always?: boolean;
+}[] = [
+  { id: "all", name: "ทั้งหมด", tone: "neutral", always: true },
+  { id: "upcoming", name: "จะเข้าพัก", statuses: ["pending", "confirmed"], tone: "info" },
+  { id: "inhouse", name: "พักอยู่ตอนนี้", statuses: ["checked_in"], tone: "success" },
+  { id: "done", name: "เสร็จสิ้น", statuses: ["checked_out"], tone: "neutral" },
+  { id: "cancelled", name: "ยกเลิก/ไม่มา", statuses: ["cancelled", "no_show"], tone: "danger" },
+];
+
 
 export default async function BookingsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ hotel: string }>;
+  searchParams: Promise<{
+    s?: string;
+    q?: string;
+    from?: string;
+    to?: string;
+    rt?: string;
+    page?: string;
+  }>;
 }) {
   const { hotel: hotelSlug } = await params;
+  const sp = await searchParams;
   const { hotel } = await requireHotelMember(hotelSlug);
-  const canCreate = await can(hotel.id, "bookings.create");
+  const [
+    canCreate,
+    canEdit,
+    canCancel,
+    canCheckin,
+    canCheckout,
+    canPayView,
+    canPayCharge,
+    canPayVerify,
+    canPayVoid,
+  ] = await Promise.all([
+    can(hotel.id, "bookings.create"),
+    can(hotel.id, "bookings.edit"),
+    can(hotel.id, "bookings.cancel"),
+    can(hotel.id, "bookings.checkin"),
+    can(hotel.id, "bookings.checkout"),
+    can(hotel.id, "payments.view"),
+    can(hotel.id, "payments.charge"),
+    can(hotel.id, "payments.verify_slip"),
+    can(hotel.id, "payments.void"),
+  ]);
   const supabase = await createClient();
 
-  const { data } = await supabase
-    .from("bookings")
-    .select("id, code, status, check_in, check_out, total_satang, guests(full_name)")
-    .eq("hotel_id", hotel.id)
-    .order("created_at", { ascending: false })
-    .limit(50);
-  const bookings = (data ?? []) as unknown as Booking[];
+  const filter = FILTERS.find((f) => f.id === sp.s) ?? FILTERS[0];
+  const page = Math.max(Number(sp.page) || 1, 1);
+  const q = sp.q?.trim() || undefined;
+  const from = sp.from || undefined;
+  const to = sp.to || undefined;
+  const rt = sp.rt || undefined;
+
+  const [{ data: rowsData }, { data: countData }, { data: rtData }] =
+    await Promise.all([
+      supabase.rpc("search_bookings", {
+        p_hotel_id: hotel.id,
+        p_statuses: filter.statuses,
+        p_q: q,
+        p_from: from,
+        p_to: to,
+        p_room_type_id: rt,
+        p_limit: PAGE_SIZE,
+        p_offset: (page - 1) * PAGE_SIZE,
+      }),
+      supabase.rpc("booking_status_counts", { p_hotel_id: hotel.id }),
+      supabase
+        .from("room_types")
+        .select("id, name")
+        .eq("hotel_id", hotel.id)
+        .is("deleted_at", null)
+        .order("sort_order"),
+    ]);
+
+  const rows = (rowsData ?? []) as Row[];
+  const total = Number(rows[0]?.total_count ?? 0);
+  const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1);
+  const roomTypes = (rtData ?? []) as { id: string; name: string }[];
+
+  const statusCount = new Map(
+    (countData ?? []).map((r) => [r.status as string, Number(r.cnt)]),
+  );
+  const countOf = (f: (typeof FILTERS)[number]) =>
+    f.statuses
+      ? f.statuses.reduce((sum, st) => sum + (statusCount.get(st) ?? 0), 0)
+      : [...statusCount.values()].reduce((a, b) => a + b, 0);
+
+  // สลับ tab เก็บ filter อื่นไว้ · ไม่ใส่ page = รีเซ็ตหน้า 1
+  const keep = new URLSearchParams();
+  if (q) keep.set("q", q);
+  if (from) keep.set("from", from);
+  if (to) keep.set("to", to);
+  if (rt) keep.set("rt", rt);
+  const tabHref = (id: string) => {
+    const p = new URLSearchParams(keep);
+    p.set("s", id);
+    return `${hotelHref("/bookings", hotel.slug)}?${p.toString()}`;
+  };
+
+  const today = new Date().toISOString().slice(0, 10);
+  const hasFilter = !!(q || from || to || rt);
 
   return (
-    <div className="p-4 sm:p-8">
-      <PageHeader
-        title="การจอง"
-        subtitle={hotel.name}
-        action={
-          canCreate && (
-            <ButtonLink href={hotelHref("/bookings/new", hotel.slug)}>+ จองใหม่</ButtonLink>
-          )
-        }
-      />
-
-      {bookings.length === 0 ? (
+    <AppPage
+      title="การจอง"
+      subtitle={hotel.name}
+      action={
+        canCreate && (
+          <ButtonLink href={hotelHref("/bookings/new", hotel.slug)}>+ จองใหม่</ButtonLink>
+        )
+      }
+      tabs={
+        <div className="space-y-3">
+          <FilterTabs
+            activeId={filter.id}
+            tabs={FILTERS.map((f) => ({
+              id: f.id,
+              label: f.name,
+              count: countOf(f),
+              href: tabHref(f.id),
+              tone: f.tone,
+              always: f.always,
+            }))}
+          />
+          <BookingsFilterBar
+            s={filter.id}
+            q={q}
+            from={from}
+            to={to}
+            rt={rt}
+            roomTypes={roomTypes}
+            clearHref={`${hotelHref("/bookings", hotel.slug)}?s=${filter.id}`}
+          />
+        </div>
+      }
+    >
+      {rows.length === 0 ? (
         <EmptyState
           art="calendar"
-          title="ยังไม่มีการจอง"
-          description="เริ่มรับจองจากหน้าเคาน์เตอร์ได้เลย"
+          title={
+            hasFilter
+              ? "ไม่พบการจองตามเงื่อนไข"
+              : filter.id === "all"
+                ? "ยังไม่มีการจอง"
+                : `ไม่มีรายการ${filter.name}`
+          }
+          description={
+            hasFilter
+              ? "ลองปรับช่วงวันที่ หรือล้างตัวกรองดู"
+              : filter.id === "all"
+                ? "เริ่มรับจองจากหน้าเคาน์เตอร์ได้เลย"
+                : undefined
+          }
           action={
-            canCreate && (
+            !hasFilter && filter.id === "all" && canCreate ? (
               <ButtonLink href={hotelHref("/bookings/new", hotel.slug)}>+ จองใหม่</ButtonLink>
-            )
+            ) : undefined
           }
         />
       ) : (
-        <Table>
-          <THead>
-            <TR>
-              <TH>โค้ด</TH>
-              <TH>แขก</TH>
-              <TH>เข้า–ออก</TH>
-              <TH>สถานะ</TH>
-              <TH className="text-right">ยอด</TH>
-            </TR>
-          </THead>
-          <TBody>
-            {bookings.map((b) => (
-              <TR key={b.id}>
-                <TD className="font-mono">{b.code}</TD>
-                <TD>{b.guests?.full_name ?? "-"}</TD>
-                <TD className="whitespace-nowrap text-fg-muted">
-                  {b.check_in} → {b.check_out}
-                </TD>
-                <TD>
-                  <Badge tone={BOOKING_STATUS_TONE[b.status] ?? "neutral"}>{b.status}</Badge>
-                </TD>
-                <TD className="text-right font-medium">
-                  {(b.total_satang / 100).toLocaleString()}฿
-                </TD>
-              </TR>
-            ))}
-          </TBody>
-        </Table>
+        <div className="space-y-4">
+          <Card pad={false}>
+            <BookingsTable
+              rows={rows}
+              hotelSlug={hotel.slug}
+              today={today}
+              perms={{
+                edit: canEdit,
+                cancel: canCancel,
+                checkin: canCheckin,
+                checkout: canCheckout,
+                payView: canPayView,
+                payCharge: canPayCharge,
+                payVerify: canPayVerify,
+                payVoid: canPayVoid,
+              }}
+            />
+          </Card>
+
+          <PaginationNav
+            currentPage={page}
+            totalPages={totalPages}
+            totalItems={total}
+            pageSize={PAGE_SIZE}
+          />
+        </div>
       )}
-    </div>
+    </AppPage>
   );
 }

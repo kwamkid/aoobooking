@@ -111,7 +111,7 @@ export function DataTable<T>({
 
   return (
     <div className={className}>
-      <div className="-mx-1 overflow-x-auto">
+      <div className="overflow-x-auto">
         <table className="table">
           <thead>
             <tr>
@@ -120,10 +120,7 @@ export function DataTable<T>({
                 return (
                   <th
                     key={col.key}
-                    className={cx(
-                      col.align === "right" && "text-right",
-                      col.sortable && "p-0",
-                    )}
+                    className={cx(col.align === "right" && "text-right")}
                     style={col.width != null ? { width: col.width } : undefined}
                     aria-sort={
                       active
@@ -138,7 +135,7 @@ export function DataTable<T>({
                         type="button"
                         onClick={() => toggleSort(col.key)}
                         className={cx(
-                          "flex w-full select-none items-center gap-1 px-2 py-2 transition-colors hover:text-fg",
+                          "flex w-full select-none items-center gap-1 transition-colors hover:text-fg",
                           active ? "font-semibold text-fg" : "text-fg-muted",
                           col.align === "right" && "justify-end",
                         )}

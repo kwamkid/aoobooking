@@ -1,6 +1,6 @@
 import { requireHotelMember } from "@/lib/auth";
 import { hotelHref } from "@/lib/hotel/href";
-import { PageHeader, Card, ButtonLink, Badge } from "@/components/ui";
+import { AppPage, PageHeader, Card, ButtonLink, Badge } from "@/components/ui";
 import { getSetupStatus } from "./setup-status";
 import { OnboardingChecklist } from "./onboarding-checklist";
 
@@ -21,15 +21,13 @@ export default async function DashboardPage({
   ];
 
   return (
-    <div className="p-4 sm:p-8">
-      <PageHeader
+    <AppPage
         title={hotel.name}
         subtitle={
           <span className="inline-flex items-center gap-2">
             ภาพรวม · สิทธิ์ของคุณ <Badge tone="brand">{role}</Badge>
           </span>
-        }
-      />
+        }>
 
       {/* ยังตั้งค่าไม่ครบ → checklist เป็นสิ่งแรกที่เห็น · ครบแล้ว → quick links ปกติ */}
       {!setup.allRequiredDone ? (
@@ -51,6 +49,6 @@ export default async function DashboardPage({
           </div>
         </Card>
       )}
-    </div>
+    </AppPage>
   );
 }

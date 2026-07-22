@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { IBM_Plex_Sans_Thai } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
 import { ToastProvider } from "@/components/ui/toast";
+import { NavProgress } from "@/components/ui/nav-progress";
 import "./globals.css";
 
 // IBM Plex Sans Thai — font หลักทั้งระบบ (rules.md #16)
@@ -34,6 +36,10 @@ export default async function RootLayout({
             __html: `(function(){try{var m=localStorage.getItem('aoo-theme');if(m==='dark'||m==='light'){document.documentElement.setAttribute('data-theme',m);}}catch(e){}})();`,
           }}
         />
+        {/* แถบ loading ตอนเปลี่ยนหน้า — จับทุก navigation ทั้งแอป (rules: ห้ามหน้านิ่งเงียบ) */}
+        <Suspense>
+          <NavProgress />
+        </Suspense>
         <NextIntlClientProvider>
           <ToastProvider>{children}</ToastProvider>
         </NextIntlClientProvider>

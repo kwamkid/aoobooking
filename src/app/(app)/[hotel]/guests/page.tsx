@@ -2,6 +2,7 @@ import { requireHotelMember } from "@/lib/auth";
 import { hotelHref } from "@/lib/hotel/href";
 import { createClient } from "@/lib/supabase/server";
 import {
+  AppPage,
   PageHeader,
   SearchBox,
   EmptyState,
@@ -52,8 +53,7 @@ export default async function GuestsPage({
   const guests = (data ?? []) as unknown as GuestSafe[];
 
   return (
-    <div className="p-4 sm:p-8">
-      <PageHeader title="แขก" subtitle={hotel.name} />
+    <AppPage title="แขก" subtitle={hotel.name}>
 
       <form className="mb-6">
         <SearchBox
@@ -93,7 +93,7 @@ export default async function GuestsPage({
                 <TD className="text-fg-muted">{g.nationality ?? "-"}</TD>
                 <TD>
                   {g.pdpa_consent_at ? (
-                    <span className="text-xs text-success">✓ ยินยอม</span>
+                    <span className="text-sm text-success-strong">✓ ยินยอม</span>
                   ) : (
                     <span className="text-xs text-fg-subtle">—</span>
                   )}
@@ -112,6 +112,6 @@ export default async function GuestsPage({
           </TBody>
         </Table>
       )}
-    </div>
+    </AppPage>
   );
 }

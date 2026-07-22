@@ -4,7 +4,7 @@ import { requireHotelMember } from "@/lib/auth";
 import { can } from "@/lib/permission";
 import { hotelHref } from "@/lib/hotel/href";
 import { createClient } from "@/lib/supabase/server";
-import { Card, EmptyState } from "@/components/ui";
+import { AppPage, Card, EmptyState } from "@/components/ui";
 import { GuestIdForm } from "./id-form";
 
 type Stay = {
@@ -65,21 +65,18 @@ export default async function GuestDetailPage({
   const stays = (staysData ?? []) as unknown as Stay[];
 
   return (
-    <div className="p-4 sm:p-8">
-      <Link href={hotelHref("/guests", hotel.slug)} className="text-sm text-fg-muted underline">
-        ← แขก
-      </Link>
-      <h1 className="mt-2 text-2xl font-bold text-fg">{guest.full_name}</h1>
-      <p className="mt-1 text-sm text-fg-muted">
-        {guest.phone ?? "-"} · {guest.email ?? "-"} · {guest.nationality ?? "-"}
-      </p>
+    <AppPage
+      title={guest.full_name}
+      subtitle={`${guest.phone ?? "-"} · ${guest.email ?? "-"} · ${guest.nationality ?? "-"}`}
+      back={{ href: hotelHref("/guests", hotel.slug), label: "แขก" }}
+    >
       <p className="mt-1 text-xs">
         {guest.pdpa_consent_at ? (
-          <span className="text-success">
+          <span className="text-success-strong">
             ✓ ยินยอม PDPA เมื่อ {new Date(guest.pdpa_consent_at).toLocaleDateString("th-TH")}
           </span>
         ) : (
-          <span className="text-warning">ยังไม่ได้ให้ความยินยอม PDPA</span>
+          <span className="text-warning-strong">ยังไม่ได้ให้ความยินยอม PDPA</span>
         )}
       </p>
 
@@ -125,6 +122,6 @@ export default async function GuestDetailPage({
           </ul>
         )}
       </section>
-    </div>
+    </AppPage>
   );
 }

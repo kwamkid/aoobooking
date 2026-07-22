@@ -13,6 +13,12 @@ export type Package = {
   max_ota_channels: number | null;
   price_thb_monthly: number | null;
   price_thb_yearly: number | null;
+  allow_booking_engine: boolean;
+  allow_channel_manager: boolean;
+  allow_dynamic_pricing: boolean;
+  allow_advanced_reports: boolean;
+  allow_custom_domain: boolean;
+  allow_monthly_rental: boolean;
   is_public: boolean;
   sort_order: number;
 };

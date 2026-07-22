@@ -63,7 +63,7 @@ export function Toast({
       className={[
         "toast-enter pointer-events-auto flex w-fit max-w-[26rem] items-start gap-2.5",
         "rounded-lg border border-border bg-bg-elevated px-4 py-2.5",
-        "text-sm font-medium text-fg shadow-lg",
+        "text-base font-medium text-fg shadow-lg",
         "transition-[opacity,transform] duration-200 ease-out",
         visible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-2",
         className ?? "",

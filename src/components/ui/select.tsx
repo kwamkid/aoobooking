@@ -17,6 +17,8 @@ import { Popover } from "./popover";
 export interface SelectOption {
   value: string;
   label: string;
+  /** ไอคอน/โลโก้หน้า label — โชว์ทั้งในรายการตัวเลือกและใน trigger ตอนเลือกแล้ว */
+  icon?: React.ReactNode;
 }
 
 export interface SelectProps {
@@ -121,8 +123,14 @@ export function Select({
           className,
         )}
       >
-        <span className={cx("truncate", !selected && "text-fg-subtle")}>
-          {selected ? selected.label : placeholder}
+        <span
+          className={cx(
+            "flex min-w-0 items-center gap-2 truncate",
+            !selected && "text-fg-subtle",
+          )}
+        >
+          {selected?.icon}
+          <span className="truncate">{selected ? selected.label : placeholder}</span>
         </span>
         <ChevronDown className="size-4 shrink-0 text-fg-muted" aria-hidden />
       </button>
@@ -158,7 +166,10 @@ export function Select({
                 isSelected ? "text-brand" : "text-fg",
               )}
             >
-              <span className="truncate">{opt.label}</span>
+              <span className="flex min-w-0 items-center gap-2">
+                {opt.icon}
+                <span className="truncate">{opt.label}</span>
+              </span>
               {isSelected && <Check className="size-4 shrink-0 text-brand" aria-hidden />}
             </button>
           );

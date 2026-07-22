@@ -70,7 +70,9 @@ export type Database = {
       }
       booking_rooms: {
         Row: {
+          adults: number
           booking_id: string
+          children: number
           created_at: string
           end_date: string
           hotel_id: string
@@ -84,7 +86,9 @@ export type Database = {
           start_date: string
         }
         Insert: {
+          adults?: number
           booking_id: string
+          children?: number
           created_at?: string
           end_date: string
           hotel_id: string
@@ -98,7 +102,9 @@ export type Database = {
           start_date: string
         }
         Update: {
+          adults?: number
           booking_id?: string
+          children?: number
           created_at?: string
           end_date?: string
           hotel_id?: string
@@ -184,6 +190,7 @@ export type Database = {
           id: string
           no_show_at: string | null
           note: string | null
+          ota_reference: string | null
           property_id: string
           status: Database["public"]["Enums"]["booking_status"]
           total_satang: number
@@ -209,6 +216,7 @@ export type Database = {
           id?: string
           no_show_at?: string | null
           note?: string | null
+          ota_reference?: string | null
           property_id: string
           status?: Database["public"]["Enums"]["booking_status"]
           total_satang?: number
@@ -234,6 +242,7 @@ export type Database = {
           id?: string
           no_show_at?: string | null
           note?: string | null
+          ota_reference?: string | null
           property_id?: string
           status?: Database["public"]["Enums"]["booking_status"]
           total_satang?: number
@@ -531,6 +540,7 @@ export type Database = {
           allow_channel_manager_override: boolean | null
           allow_custom_domain_override: boolean | null
           allow_dynamic_pricing_override: boolean | null
+          allow_monthly_rental_override: boolean | null
           created_at: string
           expires_at: string | null
           granted_by: string | null
@@ -548,6 +558,7 @@ export type Database = {
           allow_channel_manager_override?: boolean | null
           allow_custom_domain_override?: boolean | null
           allow_dynamic_pricing_override?: boolean | null
+          allow_monthly_rental_override?: boolean | null
           created_at?: string
           expires_at?: string | null
           granted_by?: string | null
@@ -565,6 +576,7 @@ export type Database = {
           allow_channel_manager_override?: boolean | null
           allow_custom_domain_override?: boolean | null
           allow_dynamic_pricing_override?: boolean | null
+          allow_monthly_rental_override?: boolean | null
           created_at?: string
           expires_at?: string | null
           granted_by?: string | null
@@ -588,6 +600,82 @@ export type Database = {
             foreignKeyName: "hotel_package_overrides_hotel_id_fkey"
             columns: ["hotel_id"]
             isOneToOne: true
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hotel_payment_accounts: {
+        Row: {
+          active: boolean
+          created_at: string
+          details: Json
+          hotel_id: string
+          id: string
+          method: Database["public"]["Enums"]["payment_method"]
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          details?: Json
+          hotel_id: string
+          id?: string
+          method: Database["public"]["Enums"]["payment_method"]
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          details?: Json
+          hotel_id?: string
+          id?: string
+          method?: Database["public"]["Enums"]["payment_method"]
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hotel_payment_accounts_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hotel_payment_methods: {
+        Row: {
+          active: boolean
+          hotel_id: string
+          method: Database["public"]["Enums"]["payment_method"]
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          hotel_id: string
+          method: Database["public"]["Enums"]["payment_method"]
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          hotel_id?: string
+          method?: Database["public"]["Enums"]["payment_method"]
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hotel_payment_methods_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
             referencedRelation: "hotels"
             referencedColumns: ["id"]
           },
@@ -790,6 +878,7 @@ export type Database = {
           allow_channel_manager: boolean
           allow_custom_domain: boolean
           allow_dynamic_pricing: boolean
+          allow_monthly_rental: boolean
           created_at: string
           description: string | null
           id: string
@@ -812,6 +901,7 @@ export type Database = {
           allow_channel_manager?: boolean
           allow_custom_domain?: boolean
           allow_dynamic_pricing?: boolean
+          allow_monthly_rental?: boolean
           created_at?: string
           description?: string | null
           id?: string
@@ -834,6 +924,7 @@ export type Database = {
           allow_channel_manager?: boolean
           allow_custom_domain?: boolean
           allow_dynamic_pricing?: boolean
+          allow_monthly_rental?: boolean
           created_at?: string
           description?: string | null
           id?: string
@@ -854,6 +945,7 @@ export type Database = {
       }
       payments: {
         Row: {
+          account_id: string | null
           amount_base_satang: number
           amount_satang: number
           booking_id: string
@@ -872,8 +964,12 @@ export type Database = {
           reference_payment_id: string | null
           slip_path: string | null
           status: Database["public"]["Enums"]["payment_status"]
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
         }
         Insert: {
+          account_id?: string | null
           amount_base_satang: number
           amount_satang: number
           booking_id: string
@@ -892,8 +988,12 @@ export type Database = {
           reference_payment_id?: string | null
           slip_path?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
         }
         Update: {
+          account_id?: string | null
           amount_base_satang?: number
           amount_satang?: number
           booking_id?: string
@@ -912,8 +1012,18 @@ export type Database = {
           reference_payment_id?: string | null
           slip_path?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "payments_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "hotel_payment_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payments_booking_id_fkey"
             columns: ["booking_id"]
@@ -954,6 +1064,13 @@ export type Database = {
             columns: ["reference_payment_id"]
             isOneToOne: false
             referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_voided_by_fkey"
+            columns: ["voided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1057,9 +1174,11 @@ export type Database = {
           created_at: string
           default_currency: string | null
           deleted_at: string | null
+          electric_unit_satang: number
           hotel_id: string
           id: string
           is_active: boolean
+          monthly_deposit_months: number
           name: string
           night_audit_mode: string
           phone: string | null
@@ -1069,6 +1188,7 @@ export type Database = {
           timezone: string
           updated_at: string
           vat_percent: number
+          water_unit_satang: number
         }
         Insert: {
           address?: string | null
@@ -1078,9 +1198,11 @@ export type Database = {
           created_at?: string
           default_currency?: string | null
           deleted_at?: string | null
+          electric_unit_satang?: number
           hotel_id: string
           id?: string
           is_active?: boolean
+          monthly_deposit_months?: number
           name: string
           night_audit_mode?: string
           phone?: string | null
@@ -1090,6 +1212,7 @@ export type Database = {
           timezone?: string
           updated_at?: string
           vat_percent?: number
+          water_unit_satang?: number
         }
         Update: {
           address?: string | null
@@ -1099,9 +1222,11 @@ export type Database = {
           created_at?: string
           default_currency?: string | null
           deleted_at?: string | null
+          electric_unit_satang?: number
           hotel_id?: string
           id?: string
           is_active?: boolean
+          monthly_deposit_months?: number
           name?: string
           night_audit_mode?: string
           phone?: string | null
@@ -1111,6 +1236,7 @@ export type Database = {
           timezone?: string
           updated_at?: string
           vat_percent?: number
+          water_unit_satang?: number
         }
         Relationships: [
           {
@@ -1118,6 +1244,55 @@ export type Database = {
             columns: ["hotel_id"]
             isOneToOne: false
             referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rate_base_prices: {
+        Row: {
+          currency: string
+          hotel_id: string
+          price_satang: number
+          rate_plan_id: string
+          room_type_id: string
+          updated_at: string
+        }
+        Insert: {
+          currency?: string
+          hotel_id: string
+          price_satang: number
+          rate_plan_id: string
+          room_type_id: string
+          updated_at?: string
+        }
+        Update: {
+          currency?: string
+          hotel_id?: string
+          price_satang?: number
+          rate_plan_id?: string
+          room_type_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rate_base_prices_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rate_base_prices_rate_plan_id_fkey"
+            columns: ["rate_plan_id"]
+            isOneToOne: false
+            referencedRelation: "rate_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rate_base_prices_room_type_id_fkey"
+            columns: ["room_type_id"]
+            isOneToOne: false
+            referencedRelation: "room_types"
             referencedColumns: ["id"]
           },
         ]
@@ -1436,6 +1611,7 @@ export type Database = {
           id: string
           is_active: boolean
           max_occupancy: number
+          monthly_rent_satang: number | null
           name: string
           photos: Json
           property_id: string
@@ -1455,6 +1631,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           max_occupancy?: number
+          monthly_rent_satang?: number | null
           name: string
           photos?: Json
           property_id: string
@@ -1474,6 +1651,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           max_occupancy?: number
+          monthly_rent_satang?: number | null
           name?: string
           photos?: Json
           property_id?: string
@@ -1631,6 +1809,110 @@ export type Database = {
           },
         ]
       }
+      tenancies: {
+        Row: {
+          block_id: string | null
+          created_at: string
+          created_by: string | null
+          deposit_satang: number
+          end_date: string | null
+          guest_id: string
+          hotel_id: string
+          id: string
+          note: string | null
+          property_id: string
+          rent_satang: number
+          room_id: string
+          start_date: string
+          status: Database["public"]["Enums"]["tenancy_status"]
+          updated_at: string
+        }
+        Insert: {
+          block_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deposit_satang?: number
+          end_date?: string | null
+          guest_id: string
+          hotel_id: string
+          id?: string
+          note?: string | null
+          property_id: string
+          rent_satang: number
+          room_id: string
+          start_date: string
+          status?: Database["public"]["Enums"]["tenancy_status"]
+          updated_at?: string
+        }
+        Update: {
+          block_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deposit_satang?: number
+          end_date?: string | null
+          guest_id?: string
+          hotel_id?: string
+          id?: string
+          note?: string | null
+          property_id?: string
+          rent_satang?: number
+          room_id?: string
+          start_date?: string
+          status?: Database["public"]["Enums"]["tenancy_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenancies_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "room_blocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenancies_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenancies_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenancies_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenancies_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenancies_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenancies_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       booking_balances: {
@@ -1710,6 +1992,17 @@ export type Database = {
       }
     }
     Functions: {
+      _apply_booking_reprice: {
+        Args: {
+          p_booking_id: string
+          p_in: string
+          p_new_total: number
+          p_out: string
+          p_room_type_name: string
+          p_rooms: number
+        }
+        Returns: undefined
+      }
       _start_trial: {
         Args: {
           p_hotel_id: string
@@ -1724,10 +2017,41 @@ export type Database = {
         Args: { p_hotel_id: string; p_package_id: string; p_reason: string }
         Returns: undefined
       }
+      booking_status_counts: {
+        Args: { p_hotel_id: string }
+        Returns: {
+          cnt: number
+          status: Database["public"]["Enums"]["booking_status"]
+        }[]
+      }
+      calc_room_price: {
+        Args: {
+          p_adults: number
+          p_children: number
+          p_in: string
+          p_out: string
+          p_rate_plan_id: string
+          p_room_type_id: string
+          p_rooms: number
+        }
+        Returns: number
+      }
       can_edit_hotel: { Args: { p_hotel_id: string }; Returns: boolean }
       can_manage_hotel: { Args: { p_hotel_id: string }; Returns: boolean }
       cancel_booking: {
         Args: { p_booking_id: string; p_reason?: string }
+        Returns: Json
+      }
+      change_booking_dates: {
+        Args: {
+          p_booking_id: string
+          p_new_check_in: string
+          p_new_check_out: string
+        }
+        Returns: Json
+      }
+      change_booking_room_type: {
+        Args: { p_booking_id: string; p_new_room_type_id: string }
         Returns: Json
       }
       check_in_booking: {
@@ -1741,20 +2065,44 @@ export type Database = {
       }
       create_booking: {
         Args: {
-          p_adults: number
           p_channel?: Database["public"]["Enums"]["booking_channel"]
           p_check_in: string
           p_check_out: string
-          p_children: number
           p_guest: Json
           p_hold_minutes?: number
           p_hotel_id: string
           p_property_id: string
           p_rate_plan_id: string
+          p_room_guests: Json
           p_room_type_id: string
-          p_rooms: number
         }
         Returns: Json
+      }
+      create_rooms_bulk: {
+        Args: {
+          p_floor?: string
+          p_hotel_id: string
+          p_property_id: string
+          p_room_numbers: string[]
+          p_room_type_id: string
+        }
+        Returns: Json
+      }
+      create_tenancy: {
+        Args: {
+          p_deposit_satang?: number
+          p_end_date?: string
+          p_guest?: Json
+          p_hotel_id: string
+          p_rent_satang?: number
+          p_room_id: string
+          p_start_date: string
+        }
+        Returns: Json
+      }
+      end_tenancy: {
+        Args: { p_end_date?: string; p_tenancy_id: string }
+        Returns: undefined
       }
       ensure_inventory: {
         Args: { p_room_type_id: string; p_until: string }
@@ -1770,6 +2118,8 @@ export type Database = {
         }
         Returns: Json
       }
+      hotel_max_rooms: { Args: { p_hotel_id: string }; Returns: number }
+      hotel_monthly_enabled: { Args: { p_hotel_id: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
       log_audit: {
         Args: {
@@ -1783,12 +2133,23 @@ export type Database = {
         }
         Returns: undefined
       }
+      post_folio_item: {
+        Args: {
+          p_booking_id: string
+          p_category: Database["public"]["Enums"]["folio_item_category"]
+          p_description: string
+          p_qty: number
+          p_unit_price_satang: number
+        }
+        Returns: string
+      }
       recalc_inventory_total: {
         Args: { p_room_type_id: string }
         Returns: undefined
       }
       record_payment: {
         Args: {
+          p_account_id?: string
           p_amount_satang: number
           p_booking_id: string
           p_method: Database["public"]["Enums"]["payment_method"]
@@ -1801,6 +2162,63 @@ export type Database = {
         Args: { p_code: string; p_hotel_id: string }
         Returns: Json
       }
+      search_bookings: {
+        Args: {
+          p_from?: string
+          p_hotel_id: string
+          p_limit?: number
+          p_offset?: number
+          p_property_id?: string
+          p_q?: string
+          p_room_type_id?: string
+          p_statuses?: Database["public"]["Enums"]["booking_status"][]
+          p_to?: string
+        }
+        Returns: {
+          charges_satang: number
+          check_in: string
+          check_out: string
+          code: string
+          created_at: string
+          guest_email: string
+          guest_id: string
+          guest_name: string
+          guest_phone: string
+          id: string
+          ota_reference: string
+          paid_satang: number
+          room_numbers: string
+          status: Database["public"]["Enums"]["booking_status"]
+          total_count: number
+          total_satang: number
+        }[]
+      }
+      search_tenancies: {
+        Args: {
+          p_hotel_id: string
+          p_limit?: number
+          p_offset?: number
+          p_q?: string
+          p_statuses?: Database["public"]["Enums"]["tenancy_status"][]
+        }
+        Returns: {
+          deposit_satang: number
+          end_date: string
+          guest_name: string
+          guest_phone: string
+          id: string
+          rent_satang: number
+          room_number: string
+          room_type_name: string
+          start_date: string
+          status: Database["public"]["Enums"]["tenancy_status"]
+          total_count: number
+        }[]
+      }
+      seed_hotel_payment_methods: {
+        Args: { p_hotel_id: string }
+        Returns: undefined
+      }
       storage_hotel_id: { Args: { p_name: string }; Returns: string }
       user_can: {
         Args: { p_hotel_id: string; p_permission: string }
@@ -1812,6 +2230,14 @@ export type Database = {
       }
       verify_slip_payment: {
         Args: { p_approve: boolean; p_payment_id: string }
+        Returns: undefined
+      }
+      void_folio_item: {
+        Args: { p_item_id: string; p_reason: string }
+        Returns: undefined
+      }
+      void_payment: {
+        Args: { p_payment_id: string; p_reason: string }
         Returns: undefined
       }
     }
@@ -1864,7 +2290,11 @@ export type Database = {
         | "ota_collect"
         | "other"
       payment_status: "pending" | "confirmed" | "failed" | "voided"
-      room_block_reason: "maintenance" | "renovation" | "private"
+      room_block_reason:
+        | "maintenance"
+        | "renovation"
+        | "private"
+        | "monthly_tenant"
       saas_payment_method: "card" | "qr_promptpay" | "manual"
       subscription_status:
         | "active"
@@ -1872,6 +2302,7 @@ export type Database = {
         | "expired"
         | "canceled"
         | "trialing"
+      tenancy_status: "active" | "ended"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2052,7 +2483,12 @@ export const Constants = {
         "other",
       ],
       payment_status: ["pending", "confirmed", "failed", "voided"],
-      room_block_reason: ["maintenance", "renovation", "private"],
+      room_block_reason: [
+        "maintenance",
+        "renovation",
+        "private",
+        "monthly_tenant",
+      ],
       saas_payment_method: ["card", "qr_promptpay", "manual"],
       subscription_status: [
         "active",
@@ -2061,6 +2497,7 @@ export const Constants = {
         "canceled",
         "trialing",
       ],
+      tenancy_status: ["active", "ended"],
     },
   },
 } as const

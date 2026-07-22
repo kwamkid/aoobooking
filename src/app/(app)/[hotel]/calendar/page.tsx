@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireHotelMember } from "@/lib/auth";
 import { hotelHref } from "@/lib/hotel/href";
 import { createClient } from "@/lib/supabase/server";
-import { PageHeader, EmptyState } from "@/components/ui";
+import { AppPage, PageHeader, EmptyState, PropertyTabs } from "@/components/ui";
 
 type Prop = { id: string; name: string };
 type RoomType = { id: string; name: string };
@@ -17,10 +17,10 @@ type InvRow = {
 // สีตามระดับความว่าง (available/total)
 function cellClass(avail: number, total: number): string {
   if (total === 0) return "bg-bg-subtle text-fg-subtle";
-  if (avail <= 0) return "bg-danger-soft text-danger";
+  if (avail <= 0) return "bg-danger-soft text-danger-strong";
   const ratio = avail / total;
-  if (ratio <= 0.25) return "bg-warning-soft text-warning";
-  return "bg-success-soft text-success";
+  if (ratio <= 0.25) return "bg-warning-soft text-warning-strong";
+  return "bg-success-soft text-success-strong";
 }
 
 export default async function CalendarPage({
@@ -45,8 +45,7 @@ export default async function CalendarPage({
 
   if (properties.length === 0) {
     return (
-      <div className="p-4 sm:p-8">
-        <PageHeader title="ปฏิทินห้องว่าง" />
+      <AppPage title="ปฏิทินห้องว่าง">
         <EmptyState
           art="calendar"
           title="ยังไม่มีสาขา"
@@ -61,7 +60,7 @@ export default async function CalendarPage({
             </>
           }
         />
-      </div>
+      </AppPage>
     );
   }
 
@@ -109,25 +108,19 @@ export default async function CalendarPage({
   });
 
   return (
-    <div className="p-4 sm:p-8">
-      <PageHeader title="ปฏิทินห้องว่าง" />
+    <AppPage title="ปฏิทินห้องว่าง">
 
       {/* property switcher (เฉพาะหลายสาขา) + month nav */}
       <div className="flex flex-wrap items-center gap-2">
-        {hotel.multi_property &&
-          properties.map((pr) => (
-            <Link
-              key={pr.id}
-              href={`${hotelHref("/calendar", hotel.slug)}?p=${pr.id}&m=${yy}-${String(mm).padStart(2, "0")}`}
-              className={`rounded-full px-3 py-1 text-sm ${
-                pr.id === activeProp.id
-                  ? "bg-brand text-brand-fg"
-                  : "border border-border text-fg-muted"
-              }`}
-            >
-              {pr.name}
-            </Link>
-          ))}
+        <PropertyTabs
+          show={hotel.multi_property}
+          activeId={activeProp.id}
+          items={properties.map((pr) => ({
+            id: pr.id,
+            name: pr.name,
+            href: `${hotelHref("/calendar", hotel.slug)}?p=${pr.id}&m=${yy}-${String(mm).padStart(2, "0")}`,
+          }))}
+        />
         <div className="ml-auto flex items-center gap-2 text-sm">
           <Link
             href={`${hotelHref("/calendar", hotel.slug)}?p=${activeProp.id}&m=${prevM}`}
@@ -211,6 +204,6 @@ export default async function CalendarPage({
           </div>
         </div>
       )}
-    </div>
+    </AppPage>
   );
 }

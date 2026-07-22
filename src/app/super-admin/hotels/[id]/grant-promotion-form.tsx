@@ -11,6 +11,7 @@ import {
   type SelectOption,
 } from "@/components/ui";
 import { grantPromotion } from "./actions";
+import { isNextControlFlowError } from "@/lib/next-error";
 
 export function GrantPromotionForm({
   hotelId,
@@ -59,6 +60,7 @@ export function GrantPromotionForm({
         setOpen(false);
         setNote("");
       } catch (e) {
+        if (isNextControlFlowError(e)) throw e; // ปล่อย redirect/notFound ให้ Next
         toast.err(e instanceof Error ? e.message : "ให้โปรโมชันไม่สำเร็จ");
       }
     });

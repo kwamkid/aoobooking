@@ -12,12 +12,13 @@
     "dashboard": "Dashboard",
     "calendar": "Calendar",
     "bookings": "Bookings",
-    "frontDesk": "Front Desk",
+    "frontDesk": "Today",
     "housekeeping": "Housekeeping",
     "rooms": "Rooms",
     "rates": "Rates",
     "guests": "Guests",
     "reports": "Reports",
-    "settings": "Settings"
+    "settings": "Settings",
+    "tenants": "Monthly Rental"
   }
 }

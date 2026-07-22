@@ -29,6 +29,9 @@ export function HintIcon({
       <button
         ref={ref}
         type="button" // สำคัญ: กัน submit form ตอนกด
+        // ไม่รับ Tab — กด Tab ในฟอร์มต้องไล่ input ตามลำดับ ไม่แวะ ⓘ ทุกช่อง
+        // (เจ้าของทัก 2026-07-22) · เมาส์ hover/click + touch ยังเปิดได้ปกติ
+        tabIndex={-1}
         aria-label={label}
         aria-expanded={open}
         aria-describedby={open ? id : undefined}
