@@ -26,6 +26,13 @@
 - **หลังแก้ bug จริง** (ไม่ใช่ typo/feature) → บอก user 1 บรรทัดว่ากับดักคืออะไร แล้วเสนอ log ลง bugs.md (symptom → root cause → fix → file/line) ใต้หัวข้อ subsystem ที่ถูก — ไม่เขียนเงียบๆ ให้ user รู้ตัว
 - **เจอเทคนิค/pattern ใหม่ที่ควรเก็บ** → เสนอ log ลง learning.md แบบเดียวกัน
 - Bug ที่ถูกจดครั้งเดียว = ไม่ต้อง debug ซ้ำอีก
+- **bug ระดับสถาปัตยกรรม** (auth / RLS / middleware / พฤติกรรม Supabase — โปรเจกต์อื่นเจอได้ด้วย) → จดลง **`/Users/ampstark/aoo-techstack/BUGS.md`** เพิ่มด้วยเสมอ
+
+## 🏗 Techstack กลาง (ตระกูล aoo)
+
+- คลัง pattern กลางอยู่ที่ **`/Users/ampstark/aoo-techstack/`** — **ก่อนออกแบบ/สร้างระบบใหม่ทุกครั้ง (auth, multi-tenant, billing, ฯลฯ) ให้เปิดค้นที่นั่นก่อนเสมอ** ถ้ามี pattern อยู่แล้ว → ทำตาม + copy จาก templates ห้ามออกแบบใหม่เอง
+- ที่มีแล้ว: **auth** (`auth/AUTH.md` + templates) · **multi-tenant** (`multi-tenant/MULTI-TENANT.md`) — ดัชนีที่ `README.md`
+- เจอบทเรียนใหม่/แก้ pattern → อัปเดตที่คลังกลางด้วยเสมอ (คลังกลาง = source of truth ของ pattern)
 
 ---
 
@@ -37,11 +44,11 @@
 | DB + Auth + Storage | **Supabase** (Postgres) | `@supabase/ssr` + `@supabase/supabase-js` |
 | ORM | **ไม่มี** — raw Supabase client (PostgREST) + raw SQL migrations | types generate จาก live DB → `src/types/database.ts` |
 | Styling | **Tailwind CSS v4** (ไม่มี shadcn) | hand-rolled components |
-| Auth | **Supabase Auth + Google OAuth เท่านั้น** | key format ใหม่ (Publishable + Secret) + JWKS local verify |
+| Auth | **Supabase Auth + Google OAuth เท่านั้น** | แยก 4 ชั้น (sign-in / callback / **user-cache** / guards) — **สถาปัตยกรรมเต็ม + template: [docs/AUTH.md](docs/AUTH.md)** |
 | i18n | **next-intl** (cookie-based, ไทย+อังกฤษ) | ไม่มี locale ใน URL |
 | Billing (SaaS) | **Beam/PromptPay** + ใบกำกับภาษีไทย | renewal manual + grace + cron downgrade |
 | Package manager | **pnpm** | Node **>= 22** (engines — Node 20 ถูก Supabase deprecate) |
-| Middleware | `src/proxy.ts` (Next 16 rename, ไม่ใช่ middleware.ts) | JWT cache |
+| Middleware | `src/proxy.ts` (Next 16 rename, ไม่ใช่ middleware.ts) | authen ผ่าน `user-cache` (ตรวจ JWT ในเครื่อง — ห้าม getUser ตรง ดู [docs/AUTH.md](docs/AUTH.md)) · แก้ไฟล์นี้ต้อง restart dev |
 
 **อ้างอิง pattern:** โปรเจกต์ `/Users/ampstark/aoosocial` (ยืม auth, RLS helpers, packages+overrides, superadmin, billing, client factories มาทั้งชุด)
 
@@ -79,6 +86,7 @@ src/lib/supabase/ · auth/ · hotel/{href,revalidate,room-numbers}.ts · package
 - **สิทธิ์/เงินเช็ค 3 ชั้น** — DB (RLS `user_can()`) + app (`requirePermission()`) + UI (ซ่อน/disable ปุ่ม)
 - **inventory mutation ผ่าน RPC + lock ใน transaction เท่านั้น** — ทุกอย่างที่แตะ `room_type_inventory` (create_booking / change_booking / create_tenancy ฯลฯ) กัน overbooking (กันเข้ม ห้ามจองเกิน)
 - **revalidate cache ผ่าน `revalidateHotel()` เท่านั้น** — revalidatePath ตรงๆ เคยพังเงียบ 18 จุด (ลืม `/[hotel]` นำหน้า)
+- **auth: ห้ามเรียก `auth.getUser()`/`getSession()`/`signIn*` ตรงๆ** — ทุกอย่างผ่านชั้นที่แยกไว้ (user-cache / requireUser / sign-in.ts) ไม่งั้นชน rate limit 429 ซ้ำรอย — กฎเต็ม+จุดเสียบ 2FA: [docs/AUTH.md](docs/AUTH.md)
 - **catch ใน server action ต้องเริ่มด้วย `isNextControlFlowError()` re-throw** — กันกลืน NEXT_REDIRECT (`src/lib/next-error.ts`)
 - **module เสริมตามแพ็กเกจ**: `allow_*` บน packages + `*_override` บน hotel_package_overrides + `resolveAccess()` — gate 3 ชั้น (RPC / page / เมนู sidebar)
 - **Permission**: fixed role preset + ติ๊กได้ (`role_permissions` override) · UI "ข้างในละเอียด ข้างนอกง่าย"

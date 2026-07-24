@@ -2,6 +2,7 @@
 
 import { revalidateHotel } from "@/lib/hotel/revalidate";
 import { requireHotelMember } from "@/lib/auth";
+import { can } from "@/lib/permission";
 import { createClient } from "@/lib/supabase/server";
 
 // check-in: assign ห้องว่าง+clean แล้วเรียก RPC (RPC เช็คสิทธิ์+guard เอง)
@@ -37,6 +38,11 @@ export type CheckInInfo = {
   bookingRoomIds: string[];
   roomTypeName: string;
   rooms: CheckInRoom[];
+  /** วันจองเดิม — modal ใช้เช็คเคสแขกมาช้ากว่าวันเข้าพัก (late check-in) */
+  checkIn: string;
+  checkOut: string;
+  /** มีสิทธิ์เลื่อนวัน (bookings.change_date) — คุมว่าจะโชว์ตัวเลือกปรับวันไหม */
+  canChangeDates: boolean;
 };
 
 export async function getCheckInRooms(
@@ -90,6 +96,9 @@ export async function getCheckInRooms(
   return {
     bookingRoomIds: brs.map((b) => b.id),
     roomTypeName: brs[0].room_type?.name ?? "",
+    checkIn: booking.check_in,
+    checkOut: booking.check_out,
+    canChangeDates: await can(hotel.id, "bookings.change_date"),
     rooms: ((roomRows ?? []) as { id: string; room_number: string; floor: string | null; housekeeping_status: CheckInRoom["housekeeping"] }[]).map(
       (r) => ({
         id: r.id,

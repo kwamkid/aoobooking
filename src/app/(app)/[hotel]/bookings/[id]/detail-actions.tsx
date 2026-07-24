@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button, useConfirm, useToast } from "@/components/ui";
 import { isNextControlFlowError } from "@/lib/next-error";
-import { confirmBooking, cancelBooking } from "../actions";
+import { confirmBooking, cancelBooking, markNoShow } from "../actions";
 import { PaymentModal, type PaymentPerms } from "../payment-modal";
 import { CheckoutModal } from "../checkout-modal";
 import { CheckInModal } from "../checkin-modal";
@@ -24,6 +24,7 @@ export function DetailActions({
   bookingId,
   code,
   status,
+  checkIn,
   guestName,
   perms,
 }: {
@@ -31,6 +32,8 @@ export function DetailActions({
   bookingId: string;
   code: string;
   status: string;
+  /** วันเข้าพัก (YYYY-MM-DD) — ปุ่ม No-show โชว์ตั้งแต่วันนี้ >= วันเข้าพัก */
+  checkIn: string;
   guestName: string | null;
   perms: DetailPerms;
 }) {
@@ -73,7 +76,12 @@ export function DetailActions({
             bookingCode={code}
             guestName={guestName}
             bookingStatus={status}
-            perms={{ charge: perms.charge, verify: perms.verify, voidPay: perms.voidPay }}
+            perms={{
+              charge: perms.charge,
+              verify: perms.verify,
+              voidPay: perms.voidPay,
+              refund: perms.refund,
+            }}
           />
         </>
       )}
@@ -111,10 +119,49 @@ export function DetailActions({
             bookingId={bookingId}
             code={code}
             guestName={guestName}
-            perms={{ charge: perms.charge, verify: perms.verify }}
+            perms={{ charge: perms.charge, verify: perms.verify, refund: perms.refund }}
           />
         </>
       )}
+      {/* No-show โชว์ตั้งแต่วันเข้าพัก (เทียบวัน UTC ให้ตรง current_date ใน RPC) */}
+      {(status === "pending" || status === "confirmed") &&
+        perms.cancel &&
+        new Date().toISOString().slice(0, 10) >= checkIn && (
+          <Button
+            variant="ghost"
+            className="text-danger-strong"
+            disabled={pending}
+            onClick={async () => {
+              const ok = await confirm({
+                title: `บันทึกว่าไม่มาเข้าพัก (No-show) · ${code}?`,
+                description:
+                  "คืนที่เหลือจะกลับมาว่างขายต่อได้ · เงินที่ชำระแล้วจะถูกยึดหรือคืนตามนโยบายยกเลิกของแพ็กเกจราคา",
+                tone: "danger",
+                confirmLabel: "บันทึก No-show",
+              });
+              if (!ok) return;
+              setPending(true);
+              try {
+                const fd = new FormData();
+                fd.set("hotelSlug", hotelSlug);
+                fd.set("bookingId", bookingId);
+                const r = await markNoShow(fd);
+                toast.ok(
+                  r.refundSatang > 0
+                    ? `บันทึก No-show แล้ว — มียอดคืนตามนโยบาย ${(r.refundSatang / 100).toLocaleString("th-TH")}฿ กดยืนยันคืนได้ที่ การชำระเงิน`
+                    : "บันทึก No-show แล้ว",
+                );
+              } catch (e) {
+                if (isNextControlFlowError(e)) throw e;
+                toast.err(e instanceof Error ? e.message : "ทำรายการไม่สำเร็จ");
+              } finally {
+                setPending(false);
+              }
+            }}
+          >
+            ไม่มาเข้าพัก
+          </Button>
+        )}
       {(status === "pending" || status === "confirmed") && perms.cancel && (
         <Button
           variant="ghost"

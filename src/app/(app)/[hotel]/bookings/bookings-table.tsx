@@ -61,6 +61,11 @@ function fmtSlash(iso: string | null | undefined): string {
   if (Number.isNaN(d.getTime())) return "-";
   return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
 }
+/** เวลาเช็คอิน/เอาท์จริง แบบสั้น "23 ก.ค. 10:04" (เวลาท้องถิ่นเครื่องผู้ใช้) */
+function fmtCheckTime(iso: string): string {
+  const d = new Date(iso);
+  return `${d.toLocaleDateString("th-TH", { day: "numeric", month: "short" })} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
 
 export type BookingActionPerms = {
   edit: boolean;
@@ -71,6 +76,7 @@ export type BookingActionPerms = {
   payCharge: boolean;
   payVerify: boolean;
   payVoid: boolean;
+  payRefund: boolean;
 };
 
 export function BookingsTable({
@@ -131,29 +137,38 @@ export function BookingsTable({
       header: "เข้าพัก",
       sortable: true,
       render: (b) => (
-        <span className="whitespace-nowrap">
-          {/* เบอร์ห้อง (มีเมื่อเช็คอิน/assign แล้ว) นำหน้าวันที่ */}
-          {b.room_numbers && (
-            <span className="mr-2">
-              <RoomBadge rooms={b.room_numbers} size="sm" />
-            </span>
-          )}
-          <span className="tabular-nums text-fg">{thStay(b.check_in, b.check_out)}</span>
-          <span className="ml-2 text-sm text-fg-muted">
-            {nightsOf(b.check_in, b.check_out)} คืน
-          </span>
-          {b.check_in === today &&
-            (b.status === "pending" || b.status === "confirmed") && (
-              <span className="ml-2">
-                <Badge tone="brand">เข้าวันนี้</Badge>
+        <div>
+          <span className="whitespace-nowrap">
+            {/* เบอร์ห้อง (มีเมื่อเช็คอิน/assign แล้ว) นำหน้าวันที่ */}
+            {b.room_numbers && (
+              <span className="mr-2">
+                <RoomBadge rooms={b.room_numbers} size="sm" />
               </span>
             )}
-          {b.check_out === today && b.status === "checked_in" && (
-            <span className="ml-2">
-              <Badge tone="warning">ออกวันนี้</Badge>
+            <span className="tabular-nums text-fg">{thStay(b.check_in, b.check_out)}</span>
+            <span className="ml-2 text-sm text-fg-muted">
+              {nightsOf(b.check_in, b.check_out)} คืน
             </span>
+            {b.check_in === today &&
+              (b.status === "pending" || b.status === "confirmed") && (
+                <span className="ml-2">
+                  <Badge tone="brand">เข้าวันนี้</Badge>
+                </span>
+              )}
+            {b.check_out === today && b.status === "checked_in" && (
+              <span className="ml-2">
+                <Badge tone="warning">ออกวันนี้</Badge>
+              </span>
+            )}
+          </span>
+          {/* เวลาเช็คอิน/เอาท์จริง — เห็นทันทีว่าแขกมาช้ากว่าวันที่จอง (เคส 22–23 มา 23) */}
+          {b.checked_in_at && (
+            <div className="mt-0.5 whitespace-nowrap text-sm tabular-nums text-fg-subtle">
+              เช็คอิน {fmtCheckTime(b.checked_in_at)}
+              {b.checked_out_at && <> · เช็คเอาท์ {fmtCheckTime(b.checked_out_at)}</>}
+            </div>
           )}
-        </span>
+        </div>
       ),
     },
     {
@@ -257,7 +272,12 @@ function PaymentCell({
           bookingCode={b.code}
           guestName={b.guest_name}
           bookingStatus={b.status}
-          perms={{ charge: perms.payCharge, verify: perms.payVerify, voidPay: perms.payVoid }}
+          perms={{
+            charge: perms.payCharge,
+            verify: perms.payVerify,
+            voidPay: perms.payVoid,
+            refund: perms.payRefund,
+          }}
         />
       )}
     </>
@@ -373,7 +393,12 @@ function RowActions({
         bookingCode={b.code}
         guestName={b.guest_name}
         bookingStatus={b.status}
-        perms={{ charge: perms.payCharge, verify: perms.payVerify, voidPay: perms.payVoid }}
+        perms={{
+          charge: perms.payCharge,
+          verify: perms.payVerify,
+          voidPay: perms.payVoid,
+          refund: perms.payRefund,
+        }}
       />
       <CheckoutModal
         open={checkoutOpen}
@@ -382,7 +407,7 @@ function RowActions({
         bookingId={b.id}
         code={b.code}
         guestName={b.guest_name}
-        perms={{ charge: perms.payCharge, verify: perms.payVerify }}
+        perms={{ charge: perms.payCharge, verify: perms.payVerify, refund: perms.payRefund }}
       />
       <CheckInModal
         open={checkinOpen}

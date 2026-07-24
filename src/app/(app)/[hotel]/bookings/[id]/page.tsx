@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireHotelMember } from "@/lib/auth";
-import { can } from "@/lib/permission";
+import { canMany } from "@/lib/permission";
 import { hotelHref } from "@/lib/hotel/href";
 import { createClient } from "@/lib/supabase/server";
 import { AppPage, Badge, BOOKING_STATUS_TONE, Card, RoomBadge } from "@/components/ui";
@@ -43,6 +43,15 @@ function thDate(iso: string): string {
     timeZone: "UTC",
   });
 }
+function thDateTime(iso: string): string {
+  return new Date(iso).toLocaleDateString("th-TH", {
+    day: "numeric",
+    month: "short",
+    year: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 export default async function BookingDetailPage({
   params,
@@ -53,40 +62,45 @@ export default async function BookingDetailPage({
   const { hotel } = await requireHotelMember(hotelSlug);
   const supabase = await createClient();
 
-  const [
-    canEdit,
-    canCancel,
-    canCheckin,
-    canCheckout,
-    canPayView,
-    canPayCharge,
-    canPayVerify,
-    canPayVoid,
-    canFolioAdd,
-    canFolioVoid,
-    canChangeDate,
-    canMoveRoom,
-  ] = await Promise.all([
-    can(hotel.id, "bookings.edit"),
-    can(hotel.id, "bookings.cancel"),
-    can(hotel.id, "bookings.checkin"),
-    can(hotel.id, "bookings.checkout"),
-    can(hotel.id, "payments.view"),
-    can(hotel.id, "payments.charge"),
-    can(hotel.id, "payments.verify_slip"),
-    can(hotel.id, "payments.void"),
-    can(hotel.id, "folio.add_charge"),
-    can(hotel.id, "folio.void_charge"),
-    can(hotel.id, "bookings.change_date"),
-    can(hotel.id, "bookings.move_room"),
-  ]);
+  // สิทธิ์ทั้งหน้าในรอบเดียว (เดิม 13 RPC call — ลดโหลดต่อหน้า 2026-07-24)
+  const p = await canMany(hotel.id, [
+    "bookings.edit",
+    "bookings.cancel",
+    "bookings.checkin",
+    "bookings.checkout",
+    "payments.view",
+    "payments.charge",
+    "payments.verify_slip",
+    "payments.void",
+    "payments.refund",
+    "folio.add_charge",
+    "folio.void_charge",
+    "bookings.change_date",
+    "bookings.move_room",
+  ] as const);
+  const canEdit = p["bookings.edit"];
+  const canCancel = p["bookings.cancel"];
+  const canCheckin = p["bookings.checkin"];
+  const canCheckout = p["bookings.checkout"];
+  const canPayView = p["payments.view"];
+  const canPayCharge = p["payments.charge"];
+  const canPayVerify = p["payments.verify_slip"];
+  const canPayVoid = p["payments.void"];
+  const canPayRefund = p["payments.refund"];
+  const canFolioAdd = p["folio.add_charge"];
+  const canFolioVoid = p["folio.void_charge"];
+  const canChangeDate = p["bookings.change_date"];
+  const canMoveRoom = p["bookings.move_room"];
 
-  const [{ data: bookingData }, { data: folioData }, { data: balData }] = await Promise.all([
+  // room_types ดึงขนานไปเลย (ทั้งโรงแรม แล้วค่อยกรองตามสาขาของ booking ทีหลัง)
+  // — เดิมรอ booking เสร็จก่อนค่อยยิง = เสีย 1 round trip ต่อคิว
+  const [{ data: bookingData }, { data: folioData }, { data: balData }, { data: rtData }] =
+    await Promise.all([
     supabase
       .from("bookings")
       .select(
-        `id, code, status, check_in, check_out, adults, children, channel, created_at,
-         total_satang, cancel_reason,
+        `id, code, status, check_in, check_out, checked_in_at, checked_out_at,
+         adults, children, channel, created_at, total_satang, cancel_reason,
          guest:guests(id, full_name, phone, email),
          booking_rooms(id, nights, price_per_night_satang, room_type_id,
            room:rooms(room_number),
@@ -109,6 +123,12 @@ export default async function BookingDetailPage({
       .select("folio_charges_satang, paid_satang, balance_satang")
       .eq("booking_id", id)
       .maybeSingle(),
+    supabase
+      .from("room_types")
+      .select("id, name, property_id")
+      .eq("hotel_id", hotel.id)
+      .is("deleted_at", null)
+      .order("sort_order"),
   ]);
 
   if (!bookingData) notFound();
@@ -125,14 +145,10 @@ export default async function BookingDetailPage({
     rate_plan: { name: string } | null;
   }[];
 
-  // ประเภทห้องทั้งหมดของสาขา — ตัวเลือกตอนย้ายห้อง
-  const { data: rtData } = await supabase
-    .from("room_types")
-    .select("id, name")
-    .eq("property_id", property.id)
-    .is("deleted_at", null)
-    .order("sort_order");
-  const roomTypes = (rtData ?? []) as { id: string; name: string }[];
+  // ประเภทห้องของสาขานี้ — ตัวเลือกตอนย้ายห้อง (กรองจากชุดที่ดึงขนานไว้แล้ว)
+  const roomTypes = ((rtData ?? []) as { id: string; name: string; property_id: string }[])
+    .filter((rt) => rt.property_id === property.id)
+    .map(({ id: rtId, name }) => ({ id: rtId, name }));
   const items = ((folioData?.folio_items ?? []) as FolioItemRow[]).sort((a, z) =>
     a.created_at.localeCompare(z.created_at),
   );
@@ -148,6 +164,13 @@ export default async function BookingDetailPage({
       label: "เข้าพัก",
       value: `${thDate(b.check_in)} → ${thDate(b.check_out)} (${nights} คืน)`,
     },
+    // เวลากดเช็คอิน/เอาท์จริง — ต่างจากวันที่จองได้ (แขกมาช้า/ออกก่อน)
+    ...(b.checked_in_at
+      ? [{ label: "เช็คอินเมื่อ", value: thDateTime(b.checked_in_at) }]
+      : []),
+    ...(b.checked_out_at
+      ? [{ label: "เช็คเอาท์เมื่อ", value: thDateTime(b.checked_out_at) }]
+      : []),
     {
       label: "ห้อง",
       value: (
@@ -208,6 +231,7 @@ export default async function BookingDetailPage({
             bookingId={b.id}
             code={b.code}
             status={b.status}
+            checkIn={b.check_in}
             guestName={guest?.full_name ?? null}
             perms={{
               edit: canEdit,
@@ -218,6 +242,7 @@ export default async function BookingDetailPage({
               charge: canPayCharge,
               verify: canPayVerify,
               voidPay: canPayVoid,
+              refund: canPayRefund,
             }}
           />
         </div>

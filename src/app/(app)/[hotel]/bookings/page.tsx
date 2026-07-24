@@ -1,7 +1,7 @@
 import type { Database } from "@/types/database";
 import type { FilterTabTone } from "@/components/ui";
 import { requireHotelMember } from "@/lib/auth";
-import { can } from "@/lib/permission";
+import { canMany } from "@/lib/permission";
 import { hotelHref } from "@/lib/hotel/href";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -66,17 +66,34 @@ export default async function BookingsPage({
     canPayCharge,
     canPayVerify,
     canPayVoid,
-  ] = await Promise.all([
-    can(hotel.id, "bookings.create"),
-    can(hotel.id, "bookings.edit"),
-    can(hotel.id, "bookings.cancel"),
-    can(hotel.id, "bookings.checkin"),
-    can(hotel.id, "bookings.checkout"),
-    can(hotel.id, "payments.view"),
-    can(hotel.id, "payments.charge"),
-    can(hotel.id, "payments.verify_slip"),
-    can(hotel.id, "payments.void"),
-  ]);
+    canPayRefund,
+  ] = await (async () => {
+    // สิทธิ์ทั้งหน้าในรอบเดียว (เดิม 10 RPC call — ลดโหลดต่อหน้า 2026-07-24)
+    const p = await canMany(hotel.id, [
+      "bookings.create",
+      "bookings.edit",
+      "bookings.cancel",
+      "bookings.checkin",
+      "bookings.checkout",
+      "payments.view",
+      "payments.charge",
+      "payments.verify_slip",
+      "payments.void",
+      "payments.refund",
+    ] as const);
+    return [
+      p["bookings.create"],
+      p["bookings.edit"],
+      p["bookings.cancel"],
+      p["bookings.checkin"],
+      p["bookings.checkout"],
+      p["payments.view"],
+      p["payments.charge"],
+      p["payments.verify_slip"],
+      p["payments.void"],
+      p["payments.refund"],
+    ] as const;
+  })();
   const supabase = await createClient();
 
   const filter = FILTERS.find((f) => f.id === sp.s) ?? FILTERS[0];
@@ -208,6 +225,7 @@ export default async function BookingsPage({
                 payCharge: canPayCharge,
                 payVerify: canPayVerify,
                 payVoid: canPayVoid,
+                payRefund: canPayRefund,
               }}
             />
           </Card>

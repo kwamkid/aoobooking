@@ -3,8 +3,11 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { createClient } from "@/lib/supabase/client";
+import { signInWithGoogle } from "@/lib/auth/sign-in";
 import { useToast } from "@/components/ui";
+
+/* ปุ่ม login — UI ล้วน · logic อยู่ lib/auth/sign-in.ts (เพิ่มวิธี login ใหม่
+ * = เพิ่มฟังก์ชันที่นั่น + ปุ่มที่นี่) */
 
 export function LoginForm() {
   const t = useTranslations("auth");
@@ -12,25 +15,18 @@ export function LoginForm() {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
 
-  async function signInWithGoogle() {
+  async function onGoogle() {
     setLoading(true);
-    const supabase = createClient();
-    const redirect = searchParams.get("redirect") ?? "/onboarding";
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirect)}`,
-      },
-    });
-    if (error) {
+    const err = await signInWithGoogle(searchParams.get("redirect") ?? "/onboarding");
+    if (err) {
       setLoading(false);
-      toast.err(error.message);
+      toast.err(err);
     }
   }
 
   return (
     <button
-      onClick={signInWithGoogle}
+      onClick={onGoogle}
       disabled={loading}
       className="flex h-12 w-full items-center justify-center gap-3 rounded-(--radius) border border-border-strong bg-bg-elevated font-medium text-fg transition hover:bg-bg-subtle disabled:opacity-50"
     >

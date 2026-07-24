@@ -10,10 +10,39 @@ import {
   type CheckInInfo,
   type CheckInRoom,
 } from "../front-desk/actions";
+import { changeBookingDates, type RepriceResult } from "./[id]/actions";
 
 /* Check-in modal — จอง = ประเภทห้อง · เช็คอิน = เลือกเบอร์ห้องจริงให้แขก
  * กริดเบอร์ห้อง + สถานะแม่บ้าน · จองหลายห้อง = จิ้มหลายเบอร์ตามจำนวน
- * ไม่มีห้องให้เลือกเลย (ยังไม่ตั้งเบอร์ห้อง) = เช็คอินแบบไม่ระบุห้องได้ */
+ * ไม่มีห้องให้เลือกเลย (ยังไม่ตั้งเบอร์ห้อง) = เช็คอินแบบไม่ระบุห้องได้
+ * แขกมาช้ากว่าวันจอง (late check-in) = ถามก่อนว่าจะปรับวันพักไหม (เจ้าของขอ
+ * 2026-07-23) — เลื่อนทั้งช่วง / คงวันออกเดิมตัดคืนที่ไม่ได้พัก / คิดตามจองเดิม
+ * (บังคับคิดเต็มไม่ได้จริงถ้ายังไม่จ่าย — แขกยกเลิกแล้วจองใหม่ได้อยู่ดี) */
+
+/** วัน UTC — ให้ตรง current_date ฝั่ง RPC (แนวเดียวกับปุ่ม No-show) */
+const todayIso = () => new Date().toISOString().slice(0, 10);
+function addDays(iso: string, n: number): string {
+  const d = new Date(iso + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+function nightsBetween(a: string, b: string): number {
+  return Math.round(
+    (new Date(b + "T00:00:00Z").getTime() - new Date(a + "T00:00:00Z").getTime()) / 86400000,
+  );
+}
+function thD(iso: string): string {
+  return new Date(iso + "T00:00:00Z").toLocaleDateString("th-TH", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  });
+}
+function baht(satang: number): string {
+  return (satang / 100).toLocaleString("th-TH", { maximumFractionDigits: 2 });
+}
+
+type LateChoice = "shift" | "keep_out" | "as_is";
 
 const HK_TH: Record<CheckInRoom["housekeeping"], { label: string; tone: "success" | "warning" | "info" | "danger" }> = {
   clean: { label: "สะอาด", tone: "success" },
@@ -50,6 +79,8 @@ export function CheckInModal({
   const [selected, setSelected] = useState<string[]>([]);
   // filter ชั้น — null = ทุกชั้น (โชว์เมื่อมี >1 ชั้น)
   const [floorFilter, setFloorFilter] = useState<string | null>(null);
+  // แขกมาช้ากว่าวันจอง — ตัวเลือกจัดการวันพัก (default = เลื่อนตามจริง)
+  const [lateChoice, setLateChoice] = useState<LateChoice>("shift");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -76,6 +107,7 @@ export function CheckInModal({
   useEffect(() => {
     if (open) {
       setSelected([]);
+      setLateChoice("shift");
       load();
     } else {
       setInfo(null);
@@ -84,6 +116,36 @@ export function CheckInModal({
 
   const need = info?.bookingRoomIds.length ?? 1;
   const selectable = info?.rooms.filter((r) => !r.unavailable) ?? [];
+
+  // เคสแขกมาช้ากว่าวันจอง (จอง 22–23 แต่มา 23) — คำนวณตัวเลือกวันพักใหม่
+  const today = todayIso();
+  const isLate = !!info && today > info.checkIn;
+  const bookedNights = info ? nightsBetween(info.checkIn, info.checkOut) : 0;
+  const shiftOut = addDays(today, bookedNights); // เลื่อนทั้งช่วง คงจำนวนคืน
+  const canKeepOut = !!info && today < info.checkOut; // ตัดคืนแรกได้เมื่อยังเหลือคืน
+  const lateOptions: { key: LateChoice; label: string; detail: string }[] = !info
+    ? []
+    : [
+        {
+          key: "shift" as const,
+          label: "เลื่อนวันพักตามจริง",
+          detail: `เข้า ${thD(today)} → ออก ${thD(shiftOut)} (${bookedNights} คืนเท่าเดิม)`,
+        },
+        ...(canKeepOut
+          ? [
+              {
+                key: "keep_out" as const,
+                label: "คงวันออกเดิม — ตัดคืนที่ไม่ได้พัก",
+                detail: `เข้า ${thD(today)} → ออก ${thD(info.checkOut)} (เหลือ ${nightsBetween(today, info.checkOut)} คืน ยอดลดลง)`,
+              },
+            ]
+          : []),
+        {
+          key: "as_is" as const,
+          label: "ไม่ปรับ — คิดตามการจองเดิม",
+          detail: `${thD(info.checkIn)} → ${thD(info.checkOut)} (เก็บค่าห้องรวมคืนที่ไม่ได้พัก)`,
+        },
+      ];
 
   // ชั้น (เรียงเลข) + จำนวนห้องว่างต่อชั้น — filter โชว์เมื่อมี >1 ชั้น
   const floors = [...new Set((info?.rooms ?? []).map((r) => r.floor ?? ""))].sort(
@@ -108,6 +170,21 @@ export function CheckInModal({
     if (!info) return;
     setBusy(true);
     try {
+      // มาช้า + เลือกปรับวัน → เลื่อนวันก่อนเช็คอิน (RPC เช็คห้องว่าง+คิดราคาใหม่
+      // ใน transaction · ถ้าห้องไม่พอ/ราคาไม่ตั้ง จะ error และยังไม่เช็คอิน)
+      if (isLate && info.canChangeDates && lateChoice !== "as_is") {
+        const fdDates = new FormData();
+        fdDates.set("hotelSlug", hotelSlug);
+        fdDates.set("bookingId", bookingId);
+        fdDates.set("checkIn", today);
+        fdDates.set("checkOut", lateChoice === "shift" ? shiftOut : info.checkOut);
+        const r: RepriceResult = await changeBookingDates(fdDates);
+        toast.ok(
+          r.diffSatang === 0
+            ? `ปรับวันพักแล้ว — ยอดเท่าเดิม ${baht(r.newTotalSatang)}฿`
+            : `ปรับวันพักแล้ว — ยอดใหม่ ${baht(r.newTotalSatang)}฿ (${r.diffSatang > 0 ? "เพิ่มขึ้น" : "ลดลง"} ${baht(Math.abs(r.diffSatang))})`,
+        );
+      }
       const assignments = selected.map((roomId, i) => ({
         booking_room_id: info.bookingRoomIds[i],
         room_id: roomId,
@@ -155,6 +232,47 @@ export function CheckInModal({
         <p className="py-8 text-center text-base text-fg-muted">กำลังโหลด…</p>
       ) : (
         <div className="space-y-4">
+          {/* แขกมาช้ากว่าวันจอง → ถามก่อนว่าจะปรับวันพักไหม (บรรทัดละตัวเลือก) */}
+          {isLate && info.canChangeDates && (
+            <div className="space-y-2 rounded-md bg-warning-soft p-3">
+              <p className="text-base font-medium text-warning-strong">
+                แขกมาช้ากว่าวันจอง (จองเข้า {thD(info.checkIn)}) — จัดการวันพักยังไง?
+              </p>
+              <div className="space-y-1.5">
+                {lateOptions.map((o) => {
+                  const active = lateChoice === o.key;
+                  return (
+                    <button
+                      key={o.key}
+                      type="button"
+                      onClick={() => setLateChoice(o.key)}
+                      className={`block w-full rounded-md border p-2 text-left transition-colors ${
+                        active
+                          ? "border-brand bg-brand-soft"
+                          : "border-border bg-bg-elevated hover:border-brand"
+                      }`}
+                    >
+                      <span
+                        className={`block text-base font-medium ${
+                          active ? "text-brand-strong" : "text-fg"
+                        }`}
+                      >
+                        {o.label}
+                      </span>
+                      <span className="block text-sm text-fg-muted">{o.detail}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          {isLate && !info.canChangeDates && (
+            <p className="rounded-md bg-warning-soft p-3 text-sm text-warning-strong">
+              แขกมาช้ากว่าวันจอง (จองเข้า {thD(info.checkIn)}) — บัญชีนี้ไม่มีสิทธิ์เลื่อนวัน
+              จะเช็คอินตามการจองเดิม · ให้ผู้มีสิทธิ์ปรับวันพักที่หน้ารายละเอียดการจองได้
+            </p>
+          )}
+
           {/* filter ชั้น + จำนวนห้องว่างต่อชั้น (เจ้าของขอ 2026-07-22) */}
           {floors.length > 1 && (
             <div className="flex flex-wrap gap-1.5">
@@ -244,11 +362,13 @@ export function CheckInModal({
           >
             {busy
               ? "กำลังเช็คอิน…"
-              : info.rooms.length === 0
-                ? "เช็คอิน (ไม่ระบุห้อง)"
-                : selected.length < need
-                  ? `เลือกห้องอีก ${need - selected.length} ห้อง`
-                  : "ยืนยันเช็คอิน"}
+              : info.rooms.length > 0 && selected.length < need
+                ? `เลือกห้องอีก ${need - selected.length} ห้อง`
+                : isLate && info.canChangeDates && lateChoice !== "as_is"
+                  ? "ปรับวันพัก + เช็คอิน"
+                  : info.rooms.length === 0
+                    ? "เช็คอิน (ไม่ระบุห้อง)"
+                    : "ยืนยันเช็คอิน"}
           </Button>
         </div>
       )}

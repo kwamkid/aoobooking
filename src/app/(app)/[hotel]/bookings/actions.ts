@@ -306,3 +306,24 @@ export async function cancelBooking(fd: FormData) {
   if (error) throw new Error(error.message);
   revalidateHotel(hotelSlug, "/bookings", "/front-desk", "/calendar");
 }
+
+// ── No-show — แขกไม่มาตามนัด (ทำได้ตั้งแต่วันเข้าพัก · สิทธิ์เดียวกับยกเลิก) ──
+// RPC ใน transaction: คืน inventory คืนที่เหลือ + ยึด/คืนเงินตาม policy + audit
+export async function markNoShow(
+  fd: FormData,
+): Promise<{ refundSatang: number; forfeitSatang: number }> {
+  const hotelSlug = fd.get("hotelSlug") as string;
+  const bookingId = fd.get("bookingId") as string;
+  const { hotel } = await requireHotelMember(hotelSlug);
+  await requirePermission(hotel.id, "bookings.cancel");
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("mark_no_show", {
+    p_booking_id: bookingId,
+  });
+  if (error) throw new Error(error.message);
+  revalidateHotel(hotelSlug, "/bookings", "/front-desk", "/calendar");
+
+  const r = data as { refund_satang: number; forfeit_satang: number };
+  return { refundSatang: r.refund_satang, forfeitSatang: r.forfeit_satang };
+}

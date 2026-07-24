@@ -177,6 +177,8 @@ export type Database = {
           channel: Database["public"]["Enums"]["booking_channel"]
           check_in: string
           check_out: string
+          checked_in_at: string | null
+          checked_out_at: string | null
           children: number
           code: string
           created_at: string
@@ -203,6 +205,8 @@ export type Database = {
           channel?: Database["public"]["Enums"]["booking_channel"]
           check_in: string
           check_out: string
+          checked_in_at?: string | null
+          checked_out_at?: string | null
           children?: number
           code?: string
           created_at?: string
@@ -229,6 +233,8 @@ export type Database = {
           channel?: Database["public"]["Enums"]["booking_channel"]
           check_in?: string
           check_out?: string
+          checked_in_at?: string | null
+          checked_out_at?: string | null
           children?: number
           code?: string
           created_at?: string
@@ -2063,6 +2069,15 @@ export type Database = {
         Args: { p_hotel_id: string; p_package_id: string }
         Returns: string[]
       }
+      confirm_refund: {
+        Args: {
+          p_account_id?: string
+          p_method: Database["public"]["Enums"]["payment_method"]
+          p_note?: string
+          p_payment_id: string
+        }
+        Returns: undefined
+      }
       create_booking: {
         Args: {
           p_channel?: Database["public"]["Enums"]["booking_channel"]
@@ -2133,6 +2148,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      mark_no_show: {
+        Args: { p_booking_id: string; p_reason?: string }
+        Returns: Json
+      }
       post_folio_item: {
         Args: {
           p_booking_id: string
@@ -2162,6 +2181,16 @@ export type Database = {
         Args: { p_code: string; p_hotel_id: string }
         Returns: Json
       }
+      refund_payment: {
+        Args: {
+          p_account_id?: string
+          p_amount_satang: number
+          p_method: Database["public"]["Enums"]["payment_method"]
+          p_note?: string
+          p_payment_id: string
+        }
+        Returns: string
+      }
       search_bookings: {
         Args: {
           p_from?: string
@@ -2178,6 +2207,8 @@ export type Database = {
           charges_satang: number
           check_in: string
           check_out: string
+          checked_in_at: string
+          checked_out_at: string
           code: string
           created_at: string
           guest_email: string
@@ -2223,6 +2254,10 @@ export type Database = {
       user_can: {
         Args: { p_hotel_id: string; p_permission: string }
         Returns: boolean
+      }
+      user_can_many: {
+        Args: { p_hotel_id: string; p_permissions: string[] }
+        Returns: Json
       }
       user_role_in_hotel: {
         Args: { p_hotel_id: string }

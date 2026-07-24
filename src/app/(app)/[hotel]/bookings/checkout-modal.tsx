@@ -7,9 +7,11 @@ import { isNextControlFlowError } from "@/lib/next-error";
 import type { PaymentMethod } from "@/components/payments/method-tile";
 import { checkOutBooking } from "../front-desk/actions";
 import { PaymentFormFields } from "./payment-form-fields";
+import { RefundInlineForm, type RefundFormValues } from "./payment-modal";
 import {
   getCheckoutSummary,
   recordBookingPayment,
+  refundBookingPayment,
   verifyBookingSlip,
   type CheckoutSummary,
 } from "./payment-actions";
@@ -20,7 +22,7 @@ import {
  * · โอนธนาคารตอนเช็คเอาท์: พนักงานเห็นเงินเข้าแล้ว = กดยืนยันสลิปในจังหวะเดียว
  *   (ต้องมีสิทธิ์ payments.verify_slip — ไม่มีก็บันทึกเป็นรอตรวจ เช็คเอาท์ยังไม่ได้) */
 
-export type CheckoutPerms = { charge: boolean; verify: boolean };
+export type CheckoutPerms = { charge: boolean; verify: boolean; refund: boolean };
 
 function baht(satang: number): string {
   return (satang / 100).toLocaleString("th-TH", { maximumFractionDigits: 2 });
@@ -135,8 +137,56 @@ export function CheckoutModal({
     }
   }
 
+  // คืนส่วนที่ชำระเกินจากในนี้เลย (เจ้าของทัก 2026-07-23 "ควรทำที่หน้านี้ได้")
+  // เลือกก้อน charge ที่ยังคืนได้มากสุดเป็นตัวอ้างอิง (refund ต้องชี้ก้อน — NOTES §6)
+  async function onRefundOverpay(chargeId: string, v: RefundFormValues) {
+    setBusy(true);
+    try {
+      const fd = new FormData();
+      fd.set("hotelSlug", hotelSlug);
+      fd.set("paymentId", chargeId);
+      fd.set("amount", v.amountBaht);
+      fd.set("method", v.method);
+      if (v.accountId) fd.set("accountId", v.accountId);
+      fd.set("note", v.note || "คืนส่วนที่ชำระเกิน");
+      await refundBookingPayment(fd);
+      const s = await load();
+      toast.ok(
+        s && s.balanceSatang === 0 ? "คืนเงินแล้ว — เช็คเอาท์ได้เลย" : "บันทึกคืนเงินแล้ว",
+      );
+      router.refresh();
+    } catch (e) {
+      if (isNextControlFlowError(e)) throw e;
+      toast.err(e instanceof Error ? e.message : "ทำรายการไม่สำเร็จ");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const balance = summary?.balanceSatang ?? 0;
   const amountSatang = Math.round((Number(amount.replace(/,/g, "")) || 0) * 100);
+
+  // ก้อนที่คืนได้ = charge confirmed − refund ที่ชี้กลับ (pending+confirmed)
+  const refundedByCharge = new Map<string, number>();
+  if (summary) {
+    for (const p of summary.payments) {
+      if (
+        p.direction === "refund" &&
+        p.reference_payment_id &&
+        (p.status === "pending" || p.status === "confirmed")
+      ) {
+        refundedByCharge.set(
+          p.reference_payment_id,
+          (refundedByCharge.get(p.reference_payment_id) ?? 0) + p.amount_satang,
+        );
+      }
+    }
+  }
+  const refundSource = (summary?.payments ?? [])
+    .filter((p) => p.direction === "charge" && p.status === "confirmed")
+    .map((p) => ({ id: p.id, refundable: p.amount_satang - (refundedByCharge.get(p.id) ?? 0) }))
+    .filter((x) => x.refundable > 0)
+    .sort((a, z) => z.refundable - a.refundable)[0];
 
   return (
     <Modal
@@ -192,11 +242,30 @@ export function CheckoutModal({
             </Button>
           )}
 
-          {balance < 0 && (
-            <p className="rounded-md bg-warning-soft p-3 text-base text-warning-strong">
-              มียอดชำระเกิน — ต้องคืนเงิน/ปรับรายการให้ยอดเป็น 0 ก่อนเช็คเอาท์
-            </p>
-          )}
+          {/* ชำระเกิน → คืนส่วนเกินจากตรงนี้เลย ยอดเป็น 0 แล้วปุ่มเช็คเอาท์โผล่ */}
+          {balance < 0 &&
+            (perms.refund && refundSource ? (
+              <div>
+                <div className="mb-1 text-base font-medium text-fg">
+                  คืนเงินส่วนที่ชำระเกิน {baht(-balance)}฿
+                </div>
+                <RefundInlineForm
+                  maxSatang={Math.min(-balance, refundSource.refundable)}
+                  showAmount
+                  methods={summary.methods}
+                  accounts={summary.accounts}
+                  submitLabel="คืนเงิน"
+                  saving={busy}
+                  onSubmit={(v) => onRefundOverpay(refundSource.id, v)}
+                />
+              </div>
+            ) : (
+              <p className="rounded-md bg-warning-soft p-3 text-base text-warning-strong">
+                มียอดชำระเกิน — ต้องคืนเงินให้ยอดเป็น 0 ก่อนเช็คเอาท์
+                {!perms.refund && " · คุณไม่มีสิทธิ์คืนเงิน (payments.refund) ให้ผู้มีสิทธิ์ทำรายการ"}
+                {perms.refund && !refundSource && " · ไม่มีรายการรับเงินให้อ้างอิง — จัดการที่ปุ่ม การชำระเงิน"}
+              </p>
+            ))}
 
           {balance > 0 &&
             (perms.charge ? (

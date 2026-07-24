@@ -24,6 +24,8 @@ export type PaymentRow = {
   created_at: string;
   confirmed_at: string | null;
   void_reason: string | null;
+  /** refund ชี้กลับ charge ก้อนที่คืน (null = refund อัตโนมัติจาก cancel/no-show) */
+  reference_payment_id: string | null;
   /** ชื่อบัญชี/เครื่องที่รับเงิน (null = ไม่ได้ระบุ หรือบัญชีถูกลบ) */
   account_name: string | null;
   /** signed URL ชั่วคราว (bucket private) — null ถ้าไม่มีสลิป */
@@ -60,7 +62,7 @@ export async function getBookingPayments(
       .maybeSingle(),
     supabase
       .from("payments")
-      .select("id, direction, amount_satang, method, status, note, created_at, confirmed_at, void_reason, slip_path, account:hotel_payment_accounts(name)")
+      .select("id, direction, amount_satang, method, status, note, created_at, confirmed_at, void_reason, reference_payment_id, slip_path, account:hotel_payment_accounts(name)")
       .eq("booking_id", bookingId)
       .eq("hotel_id", hotel.id)
       .order("created_at", { ascending: false }),
@@ -238,6 +240,61 @@ export async function voidBookingPayment(fd: FormData): Promise<void> {
   const { error } = await supabase.rpc("void_payment", {
     p_payment_id: paymentId,
     p_reason: reason,
+  });
+  if (error) throw new Error(error.message);
+
+  revalidateHotel(hotelSlug, "/bookings", "/front-desk", "/dashboard");
+}
+
+// ── คืนเงินอ้างอิงรายการรับ (payments.refund) — BLUEPRINT §14.7 ─────────────
+// คืนจริงเกิดนอกระบบ (ยื่นสด/โอนกลับ) แล้วมาบันทึก → confirmed ทันที
+// RPC กันยอดคืนรวมเกินก้อนที่อ้างอิง + เช็คบัญชีเป็นของโรงแรม
+export async function refundBookingPayment(fd: FormData): Promise<void> {
+  const hotelSlug = fd.get("hotelSlug") as string;
+  const paymentId = fd.get("paymentId") as string; // charge ก้อนที่คืน
+  const method = fd.get("method") as PaymentMethod;
+  const note = ((fd.get("note") as string) || "").trim() || null;
+  const accountId = (fd.get("accountId") as string) || null;
+
+  const { hotel } = await requireHotelMember(hotelSlug);
+  await requirePermission(hotel.id, "payments.refund");
+
+  const amountBaht = Number(String(fd.get("amount") ?? "").replace(/,/g, ""));
+  const amountSatang = Math.round(amountBaht * 100);
+  if (!Number.isFinite(amountBaht) || amountSatang <= 0) {
+    throw new Error("จำนวนเงินต้องมากกว่า 0");
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("refund_payment", {
+    p_payment_id: paymentId,
+    p_amount_satang: amountSatang,
+    p_method: method,
+    p_account_id: accountId ?? undefined,
+    p_note: note ?? undefined,
+  });
+  if (error) throw new Error(error.message);
+
+  revalidateHotel(hotelSlug, "/bookings", "/front-desk", "/dashboard");
+}
+
+// ── ยืนยันคืนจริงของ refund pending (สร้างอัตโนมัติตอน cancel/no-show) ───────
+export async function confirmRefundPayment(fd: FormData): Promise<void> {
+  const hotelSlug = fd.get("hotelSlug") as string;
+  const paymentId = fd.get("paymentId") as string; // refund pending
+  const method = fd.get("method") as PaymentMethod;
+  const note = ((fd.get("note") as string) || "").trim() || null;
+  const accountId = (fd.get("accountId") as string) || null;
+
+  const { hotel } = await requireHotelMember(hotelSlug);
+  await requirePermission(hotel.id, "payments.refund");
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("confirm_refund", {
+    p_payment_id: paymentId,
+    p_method: method,
+    p_account_id: accountId ?? undefined,
+    p_note: note ?? undefined,
   });
   if (error) throw new Error(error.message);
 
